@@ -1,69 +1,87 @@
 from trueskill import TrueSkill, Rating, rate
-import fnmatch
-import os
-import csv
+import argparse
+import json
+import httplib
 
-def parse_data():
-    # Get a directory listing.
-    # We want to find any files ending in _matches.csv
-    matches = []
-    for root, dirnames, filenames in os.walk('the-blue-alliance-data'):
-        for filename in fnmatch.filter(filenames, '*_matches.csv'):
-            matches.append(os.path.join(root, filename))
-    matches = sorted(matches)
-    #print matches
-    
-    # Set the draw probability based on previous data - around 3%
-    env = TrueSkill(draw_probability=0.03) # Try tweaking tau and beta too
-    
+def get_event_matches(event):
+    conn = httplib.HTTPSConnection('www.thebluealliance.com')
+    header = {'X-TBA-App-Id': '%s:%s:%s' % ('frc4774', 'trueskill', '1.0')}
+    conn.request('GET', '/api/v2/event/%s/matches' % event, None, header)
+    response = conn.getresponse()
+    response = json.loads(response.read().decode("utf-8"))
+    return response
+
+def get_matches(event=None, year=None):
+
+    if event:
+        return get_event_matches(event)
+    if year:
+        conn = httplib.HTTPSConnection('www.thebluealliance.com')
+        header = {'X-TBA-App-Id': '%s:%s:%s' % ('frc4774', 'trueskill', '1.0')}
+        conn.request('GET', '/api/v2/events/%s' % year, None, header)
+        response = conn.getresponse()
+        response = json.loads(response.read().decode("utf-8"))
+        all_events = []
+        for event in response:
+            name = event['key']
+            all_events += get_event_matches(name)
+        return all_events
+
+def parse_matches(matches, env):
+
     count = 0.0
     draws = 0.0
-    
+
     # Initialise our teams dictionary
     teams = {}
-    try:
-        # Now start iterating over the files to build up rankings
-        for matchfile in matches:
-            with open(matchfile, 'rb') as csvfile:
-                csvreader = csv.reader(csvfile, delimiter=',')
-                headers = csvreader.next() # Ignore header row
-                for row in csvreader:
-                    if len(row) % 2 == 0: # Weird row - odd number of teams
-                        continue 
-                    red_alliance = ()
-                    blue_alliance = ()
-                    # Calculate teams per alliance
-                    n = (len(row) - 3) / 2 # Number of teams per alliance
-                    for red in range(1, n+1):
-                        if not row[red] in teams:
-                            teams[row[red]] = env.Rating()
-                        red_alliance = red_alliance + (teams[row[red]],)
-                    for blue in range(n+1, 2*n+1):
-                        if not row[blue] in teams:
-                            teams[row[blue]] = env.Rating()
-                        blue_alliance = blue_alliance + (teams[row[blue]],)
-                    # Update ratings based on result
-                    if row[2*n+1] == row[2*n+2]: # Tied
-                        ranks = [0, 0]
-                        draws = draws + 1
-                    elif row[2*n+1] > row[2*n+2]: # Red beat blue
-                        ranks = [0, 1] # Lower is better
-                    else:
-                        ranks = [1, 0]
-                    new_red, new_blue = env.rate([red_alliance, blue_alliance], ranks)
-                    count = count + 1
-                    # Store the new values
-                    new_ratings = new_red + new_blue
-                    for i in range(len(new_ratings)):
-                        teams[row[1+i]] = new_ratings[i]
-    except:
-        print matchfile
-    #teams = sorted(teams.iteritems(), key=lambda (k,v): (('0000'+k[3:])[-4:],v)) # Sort by team number
-    teams = sorted(teams.iteritems(), key=lambda (k,v): (env.expose(v), k)) # Sort by trueskill
+    for row in matches:
+        alliances = row['alliances']
+        red_alliance = alliances['red']['teams']
+        blue_alliance = alliances['blue']['teams']
+        # Calculate teams per alliance
+        for alliance in [red_alliance, blue_alliance]:
+            for team in alliance:
+                if not team in teams:
+                    teams[team] = env.Rating()
+        # Update ratings based on result
+        if alliances['red']['score'] == alliances['blue']['score']:  # Tied
+            ranks = [0, 0]
+            draws = draws + 1
+        elif alliances['red']['score'] > alliances['blue']['score']:  # Red beat blue
+            ranks = [0, 1]  # Lower is better
+        else:
+            ranks = [1, 0]
+        new_red, new_blue = env.rate([[teams[number] for number in red_alliance],
+                                      [teams[number] for number in blue_alliance]], ranks)
+        count = count + 1
+        # Store the new values
+        new_ratings = new_red + new_blue
+        for rating, team_number in zip(new_ratings, red_alliance + blue_alliance):
+            teams[team_number] = rating
+    print "Draw rate: " + str(draws / count)
+    return teams
+
+def sort_by_trueskill(teams, env):
+    return sorted(teams.iteritems(), key=lambda (k, v): (env.expose(v), k))  # Sort by trueskill
+
+def sort_by_name(teams):
+    return sorted(teams.iteritems(), key=lambda (k, v): (('0000' + k[3:])[-4:], v))  # Sort by team number
+
+def print_teams(teams, env):
     for k,v in teams:
         print k + ': ' + str(env.expose(v))
-    
-    print "Draw rate: " + str(draws/count)
+
 
 if __name__ == '__main__':
-    parse_data()
+    parser = argparse.ArgumentParser(description='Run TrueSkill algorithm on event results.')
+    parser.add_argument('--event', help='TheBlueAlliance event code')
+    parser.add_argument('--year', help='All matches in all events in specified year', type=str)
+
+    args = parser.parse_args()
+
+    # Set the draw probability based on previous data - around 3%
+    env = TrueSkill(draw_probability=0.03)  # Try tweaking tau and beta too
+    matches = get_matches(event=args.event, year=args.year)
+    teams = parse_matches(matches, env)
+    teams = sort_by_trueskill(teams, env)
+    print_teams(teams, env)
