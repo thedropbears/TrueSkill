@@ -45,6 +45,8 @@ def parse_matches(matches, env):
                     teams[team] = env.Rating()
         # Update ratings based on result
         if alliances['red']['score'] == alliances['blue']['score']:  # Tied
+            if alliances['red']['score'] == -1:
+                continue  # No result yet
             ranks = [0, 0]
             draws = draws + 1
         elif alliances['red']['score'] > alliances['blue']['score']:  # Red beat blue
@@ -59,6 +61,7 @@ def parse_matches(matches, env):
         for rating, team_number in zip(new_ratings, red_alliance + blue_alliance):
             teams[team_number] = rating
     print "Draw rate: " + str(draws / count)
+    print "Matches: " + str(count)
     return teams
 
 def sort_by_trueskill(teams, env):
@@ -80,7 +83,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Set the draw probability based on previous data - around 3%
-    env = TrueSkill(draw_probability=0.03)  # Try tweaking tau and beta too
+    env = TrueSkill(draw_probability=0.01)  # Try tweaking tau and beta too
     matches = get_matches(event=args.event, year=args.year)
     teams = parse_matches(matches, env)
     teams = sort_by_trueskill(teams, env)
