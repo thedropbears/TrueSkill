@@ -3,18 +3,26 @@ import argparse
 import json
 import httplib
 
-def get_event_matches(event):
+def get_tba_data(url):
     conn = httplib.HTTPSConnection('www.thebluealliance.com')
     header = {'X-TBA-App-Id': '%s:%s:%s' % ('frc4774', 'trueskill', '1.0')}
-    conn.request('GET', '/api/v2/event/%s/matches' % event, None, header)
+    conn.request('GET', url, None, header)
     response = conn.getresponse()
     response = json.loads(response.read().decode("utf-8"))
     return response
 
-def get_matches(event=None, year=None):
+def get_event_matches(event):
+    return get_tba_data('/api/v2/event/%s/matches' % event)
 
-    if event:
-        return get_event_matches(event)
+def get_event_teams(event):
+    if not event:
+        return None
+    data = get_tba_data('/api/v2/event/%s/teams' % event)
+    teams = [entry['key'] for entry in data]
+    return teams
+
+def get_matches(event=None, year=None):
+    teams = get_event_teams(event)
     if year:
         conn = httplib.HTTPSConnection('www.thebluealliance.com')
         header = {'X-TBA-App-Id': '%s:%s:%s' % ('frc4774', 'trueskill', '1.0')}
@@ -25,7 +33,10 @@ def get_matches(event=None, year=None):
         for event in response:
             name = event['key']
             all_events += get_event_matches(name)
-        return all_events
+        return all_events, teams
+    else:
+        return get_event_matches(event), teams
+
 
 def parse_matches(matches, env):
 
@@ -83,8 +94,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # Set the draw probability based on previous data - around 3%
-    env = TrueSkill(draw_probability=0.01)  # Try tweaking tau and beta too
-    matches = get_matches(event=args.event, year=args.year)
-    teams = parse_matches(matches, env)
-    teams = sort_by_trueskill(teams, env)
-    print_teams(teams, env)
+    env = TrueSkill(draw_probability=0.015)  # Try tweaking tau and beta too
+    matches, teams = get_matches(event=args.event, year=args.year)
+    results = parse_matches(matches, env)
+    if teams:
+        # Only show the teams from a single event
+        for k, v in results.items():
+            if not k in teams:
+                del results[k]
+    results = sort_by_trueskill(results, env)
+    print_teams(results, env)
