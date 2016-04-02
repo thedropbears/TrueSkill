@@ -38,7 +38,7 @@ def get_matches(event=None, year=None):
         return get_event_matches(event), teams
 
 
-def parse_matches(matches, env):
+def parse_matches(matches, env, predict=False):
 
     count = 0.0
     draws = 0.0
@@ -57,7 +57,12 @@ def parse_matches(matches, env):
         # Update ratings based on result
         if alliances['red']['score'] == alliances['blue']['score']:  # Tied
             if alliances['red']['score'] == -1:
-                continue  # No result yet
+                if predict:
+                    proba = env.quality([[teams[number] for number in red_alliance],
+                                        [teams[number] for number in blue_alliance]])
+                    print row['match_number'], [str(number)[3:] for number in red_alliance], [str(number)[3:] for number in blue_alliance], "Win probability: %2.0f:%2.0f"  %((1.0-proba)*100,proba*100)
+                else:
+                    continue  # No result yet
             ranks = [0, 0]
             draws = draws + 1
         elif alliances['red']['score'] > alliances['blue']['score']:  # Red beat blue
@@ -71,8 +76,9 @@ def parse_matches(matches, env):
         new_ratings = new_red + new_blue
         for rating, team_number in zip(new_ratings, red_alliance + blue_alliance):
             teams[team_number] = rating
-    print "Draw rate: " + str(draws / count)
-    print "Matches: " + str(count)
+    if not predict:
+        print "Draw rate: " + str(draws / count)
+        print "Matches: " + str(count)
     return teams
 
 def sort_by_trueskill(teams, env):
@@ -90,17 +96,19 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run TrueSkill algorithm on event results.')
     parser.add_argument('--event', help='TheBlueAlliance event code')
     parser.add_argument('--year', help='All matches in all events in specified year', type=str)
+    parser.add_argument('--predict', help='Predict unplayed matches', dest='predict', action='store_true')
 
     args = parser.parse_args()
 
     # Set the draw probability based on previous data - around 3%
     env = TrueSkill(draw_probability=0.015)  # Try tweaking tau and beta too
     matches, teams = get_matches(event=args.event, year=args.year)
-    results = parse_matches(matches, env)
+    results = parse_matches(matches, env, args.predict)
     if teams:
         # Only show the teams from a single event
         for k, v in results.items():
             if not k in teams:
                 del results[k]
     results = sort_by_trueskill(results, env)
-    print_teams(results, env)
+    if not args.predict:
+        print_teams(results, env)
