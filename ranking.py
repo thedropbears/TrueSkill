@@ -1,50 +1,13 @@
 from trueskill import TrueSkill, Rating, rate
 import argparse
-import json
-import httplib
-
-def get_tba_data(url):
-    conn = httplib.HTTPSConnection('www.thebluealliance.com')
-    header = {'X-TBA-App-Id': '%s:%s:%s' % ('frc4774', 'trueskill', '1.0')}
-    conn.request('GET', url, None, header)
-    response = conn.getresponse()
-    response = json.loads(response.read().decode("utf-8"))
-    return response
-
-def get_event_matches(event):
-    return get_tba_data('/api/v2/event/%s/matches' % event)
-
-def get_event_teams(event):
-    if not event:
-        return None
-    data = get_tba_data('/api/v2/event/%s/teams' % event)
-    teams = [entry['key'] for entry in data]
-    return teams
-
-def get_matches(event=None, year=None):
-    teams = get_event_teams(event)
-    if year:
-        conn = httplib.HTTPSConnection('www.thebluealliance.com')
-        header = {'X-TBA-App-Id': '%s:%s:%s' % ('frc4774', 'trueskill', '1.0')}
-        conn.request('GET', '/api/v2/events/%s' % year, None, header)
-        response = conn.getresponse()
-        response = json.loads(response.read().decode("utf-8"))
-        all_events = []
-        for event in response:
-            name = event['key']
-            all_events += get_event_matches(name)
-        return all_events, teams
-    else:
-        return get_event_matches(event), teams
-
+from pytba import api as tba
 
 def parse_matches(matches, env, predict=False):
-
     count = 0.0
     draws = 0.0
 
-    # Initialise our teams dictionary
-    teams = {}
+    # Initialise our trueskills dictionary
+    trueskills = {}
     for row in matches:
         alliances = row['alliances']
         red_alliance = alliances['red']['teams']
@@ -52,15 +15,15 @@ def parse_matches(matches, env, predict=False):
         # Calculate teams per alliance
         for alliance in [red_alliance, blue_alliance]:
             for team in alliance:
-                if not team in teams:
-                    teams[team] = env.Rating()
+                if not team in trueskills:
+                    trueskills[team] = env.Rating()
         # Update ratings based on result
         if alliances['red']['score'] == alliances['blue']['score']:  # Tied
             if alliances['red']['score'] == -1:
                 if predict:
                     proba = env.quality([[teams[number] for number in red_alliance],
                                         [teams[number] for number in blue_alliance]])
-                    print row['match_number'], [str(number)[3:] for number in red_alliance], [str(number)[3:] for number in blue_alliance], "Win probability: %2.0f:%2.0f"  %((1.0-proba)*100,proba*100)
+                    print(row['match_number'], [str(number)[3:] for number in red_alliance], [str(number)[3:] for number in blue_alliance], "Win probability: %2.0f:%2.0f"  %((1.0-proba)*100,proba*100))
                 else:
                     continue  # No result yet
             ranks = [0, 0]
@@ -69,46 +32,51 @@ def parse_matches(matches, env, predict=False):
             ranks = [0, 1]  # Lower is better
         else:
             ranks = [1, 0]
-        new_red, new_blue = env.rate([[teams[number] for number in red_alliance],
-                                      [teams[number] for number in blue_alliance]], ranks)
+        new_red, new_blue = env.rate([[trueskills[number] for number in red_alliance],
+                                      [trueskills[number] for number in blue_alliance]], ranks)
         count = count + 1
         # Store the new values
         new_ratings = new_red + new_blue
         for rating, team_number in zip(new_ratings, red_alliance + blue_alliance):
-            teams[team_number] = rating
+            trueskills[team_number] = rating
     if not predict:
-        print "Draw rate: " + str(draws / count)
-        print "Matches: " + str(count)
-    return teams
+        if count > 0:
+            print("Draw rate: %f" % (draws / count))
+        print("Matches: %i" % count)
+    return trueskills
 
-def sort_by_trueskill(teams, env):
-    return sorted(teams.iteritems(), key=lambda (k, v): (env.expose(v), k))  # Sort by trueskill
+def get_all_matches(year):
+    matches = []
+    events = tba.tba_get('events/%s' % year)
+    for event in events:
+        matches += tba.event_get(event['key']).matches
+    return sorted(matches, key=lambda k: float('inf') if k['time'] is None else k['time'])
 
-def sort_by_name(teams):
-    return sorted(teams.iteritems(), key=lambda (k, v): (('0000' + k[3:])[-4:], v))  # Sort by team number
+def sort_by_trueskill(trueskills, env):
+    return sorted(trueskills.items(), key=lambda k: env.expose(k[1]), reverse=True)  # Sort by trueskill
 
-def print_teams(teams, env):
-    for k,v in teams:
-        print k + ': ' + str(env.expose(v))
+def sort_by_name(trueskills):
+    return sorted(trueskills.items(), key=lambda k: ('0000' + k[0][3:])[-4:])  # Sort by team number
+
+def print_trueskills(trueskills, env):
+    for k,v in trueskills:
+        print('%s: %f' % (k, env.expose(v)))
 
 
 if __name__ == '__main__':
+    import datetime
+    now = datetime.datetime.now()
+    tba.set_api_key('frc4774', 'trueskill', '1.0')
     parser = argparse.ArgumentParser(description='Run TrueSkill algorithm on event results.')
-    parser.add_argument('--event', help='TheBlueAlliance event code')
-    parser.add_argument('--year', help='All matches in all events in specified year', type=str)
     parser.add_argument('--predict', help='Predict unplayed matches', dest='predict', action='store_true')
+    parser.add_argument('--year', help='All matches in all events in specified year', type=str, default=str(now.year))
 
     args = parser.parse_args()
 
     # Set the draw probability based on previous data - around 3%
-    env = TrueSkill(draw_probability=0.015)  # Try tweaking tau and beta too
-    matches, teams = get_matches(event=args.event, year=args.year)
-    results = parse_matches(matches, env, args.predict)
-    if teams:
-        # Only show the teams from a single event
-        for k, v in results.items():
-            if not k in teams:
-                del results[k]
+    env = TrueSkill(draw_probability=0.025)  # Try tweaking tau and beta too
+    matches = get_all_matches(args.year)
+    results = parse_matches(matches, env)
     results = sort_by_trueskill(results, env)
-    if not args.predict:
-        print_teams(results, env)
+    #results = sort_by_name(results)
+    print_trueskills(results, env)
