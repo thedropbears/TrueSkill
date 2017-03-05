@@ -22,6 +22,7 @@ def verify():
 
 @app.route('/tba-webhook', methods=['POST'])
 def tba_webhook():
+    global verify_data
     msg_data = request.json['message_data']
     msg_type = request.json['message_type']
     if msg_type == 'verification':
