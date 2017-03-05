@@ -2,7 +2,6 @@ from trueskill import TrueSkill, Rating, rate
 import argparse
 import requests
 from datetime import datetime
-#from pytba import api as tba
 
 
 class FrcTrueSkill:
@@ -10,7 +9,7 @@ class FrcTrueSkill:
         self.env = TrueSkill(draw_probability=0.02)
         self.trueskills = {}
         self.events = {}
-        self.get_previous_matches()
+        #self.get_previous_matches()
         #for team in self.trueskills.keys():
          #   print team, self.skill(team)
 

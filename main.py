@@ -1,17 +1,20 @@
 import logging
-from slacker import Slacker
+import os
 from flask import Flask, request
 from frc_trueskill import FrcTrueSkill
+from slackclient import SlackClient
+
 
 app = Flask(__name__)
-slack = Slacker('xoxp-14694181588-14700916992-149818386853-291b2003af5865e54e895136b070257a')
 trueskill = FrcTrueSkill()
 verify_data = {'verification_key': 'No verification code received'}
 
+# Set up Slack integration
+slack = SlackClient(os.environ.get('SLACK_TOKEN'))
 
 @app.route('/')
 def hello():
-    slack.chat.post_message('#trueskill', 'Hello world!')
+    slack_message('Hello world!')
     return 'Hello World!'
 
 
@@ -40,9 +43,9 @@ def predict(msg_data):
     event = msg_data['event_name']
     match = msg_data['match_key'].split('_')[1]
     prediction = trueskill.predict(red, blue)
-    slack.chat.post_message('#trueskill', '%s - %s\n%s, %s, %s vs %s, %s, %s'
+    slack_message('%s - %s\n%s, %s, %s vs %s, %s, %s'
             % (event, match, red[0], red[1], red[2], blue[0], blue[1], blue[2]))
-    slack.chat.post_message('#trueskill', '%i%% : %i%%' % (prediction, 100-prediction))
+    slack_message('%i%% : %i%%' % (prediction, 100-prediction))
 
 def update(msg_data):
     event_key = msg_data['match']['event_key']
@@ -54,10 +57,13 @@ def update(msg_data):
     event_teams = trueskill.events[event_key]
     skills = [(team['key'], trueskill.skill(team['key'])) for team in event_teams]
     skills = sorted(skills, key=lambda skill: skill[1], reverse=True)
-    slack.chat.post_message('#trueskill', '%s' % event)
+    slack_message('%s' % event)
     for skill in skills:
-        slack.chat.post_message('#trueskill', '%s: %f' % skill)
+        slack_message('%s: %f' % skill)
 
+def slack_message(msg):
+    slack.api_call('chat.postMessage', channel='#trueskill',
+            text=msg, username='trueskillbot', icon_emoji=':robot_face:')
 
 @app.errorhandler(500)
 def server_error(e):
