@@ -51,8 +51,8 @@ def update(msg_data):
     red = alliances['red']
     blue = alliances['blue']
     trueskill.update(blue['teams'], blue['score'], red['teams'], red['score'])
-    event_teams = trueskill.trueskills.keys() #trueskill.events[event_key]
-    skills = [(team, trueskill.skill(team)) for team in event_teams]
+    event_teams = trueskill.events[event_key]
+    skills = [(team['key'], trueskill.skill(team['key'])) for team in event_teams]
     skills = sorted(skills, key=lambda skill: skill[1], reverse=True)
     slack.chat.post_message('#trueskill', '%s' % event)
     for skill in skills:
