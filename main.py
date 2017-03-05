@@ -2,19 +2,18 @@ import logging
 import os
 from flask import Flask, request
 from frc_trueskill import FrcTrueSkill
-from slackclient import SlackClient
+from slack import Slack
 
 
 app = Flask(__name__)
 trueskill = FrcTrueSkill()
-verify_data = {'verification_key': 'No verification code received'}
 
 # Set up Slack integration
-slack = SlackClient(os.environ.get('SLACK_TOKEN'))
+slack = Slack()
 
 @app.route('/')
 def hello():
-    slack_message('Hello world!')
+    slack.message('Hello world!')
     return 'Hello World!'
 
 
@@ -25,11 +24,10 @@ def verify():
 
 @app.route('/tba-webhook', methods=['POST'])
 def tba_webhook():
-    global verify_data
     msg_data = request.json['message_data']
     msg_type = request.json['message_type']
     if msg_type == 'verification':
-        verify_data = msg_data
+        slack.message('TBA verification key: %s' % msg_data)
     elif msg_type == 'upcoming_match':
         predict(msg_data)
     elif msg_type == 'match_score':
@@ -43,9 +41,9 @@ def predict(msg_data):
     event = msg_data['event_name']
     match = msg_data['match_key'].split('_')[1]
     prediction = trueskill.predict(red, blue)
-    slack_message('%s - %s\n%s, %s, %s vs %s, %s, %s'
+    slack.message('%s - %s\n%s, %s, %s vs %s, %s, %s'
             % (event, match, red[0], red[1], red[2], blue[0], blue[1], blue[2]))
-    slack_message('%i%% : %i%%' % (prediction, 100-prediction))
+    slack.message('%i%% : %i%%' % (prediction, 100-prediction))
 
 def update(msg_data):
     event_key = msg_data['match']['event_key']
@@ -57,13 +55,9 @@ def update(msg_data):
     event_teams = trueskill.events[event_key]
     skills = [(team['key'], trueskill.skill(team['key'])) for team in event_teams]
     skills = sorted(skills, key=lambda skill: skill[1], reverse=True)
-    slack_message('%s' % event)
+    slack.message('%s' % event)
     for skill in skills:
-        slack_message('%s: %f' % skill)
-
-def slack_message(msg):
-    slack.api_call('chat.postMessage', channel='#trueskill',
-            text=msg, username='trueskillbot', icon_emoji=':robot_face:')
+        slack.message('%s: %f' % skill)
 
 @app.errorhandler(500)
 def server_error(e):
