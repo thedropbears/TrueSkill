@@ -39,8 +39,8 @@ def tba_webhook():
 
 
 def predict(msg_data):
-    red = msg_data['team_keys'][0:3]
-    blue = msg_data['team_keys'][3:6]
+    blue = msg_data['team_keys'][0:3]
+    red = msg_data['team_keys'][3:6]
     event = msg_data['event_name']
     event_key = msg_data['match_key'].split('_')[0]
     match = msg_data['match_key'].split('_')[1]
