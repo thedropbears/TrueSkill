@@ -1,7 +1,7 @@
 from trueskill import TrueSkill, Rating, rate
 import argparse
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class FrcTrueSkill:
@@ -9,9 +9,7 @@ class FrcTrueSkill:
         self.env = TrueSkill(draw_probability=0.02)
         self.trueskills = {}
         self.events = {}
-        #self.get_previous_matches()
-        #for team in self.trueskills.keys():
-         #   print team, self.skill(team)
+        self.get_previous_matches()
 
     def update(self, red_alliance, red_score, blue_alliance, blue_score):
         # Calculate teams per alliance
@@ -42,29 +40,31 @@ class FrcTrueSkill:
         return round(proba*100)
 
     def skill(self, team):
+        if not team in self.trueskills:
+            self.trueskills[team] = self.env.Rating()
         return self.env.expose(self.trueskills[team])
+
+    def get_teams_at_event(self, event):
+        if not event in self.events:
+            # We haven't got this one yet
+            teams = requests.get("https://www.thebluealliance.com/api/v2/event/"+event+"/teams", headers={"X-TBA-App-Id":"frc-4774:TrueSkill:1.0"})
+            teams = teams.json()
+            self.events[event] = teams
+        return self.events[event]
 
     def get_previous_matches(self):
         started_events = []
         all_matches = []
-        events = requests.get("https://www.thebluealliance.com/api/v2/events/2017")
+        events = requests.get("https://www.thebluealliance.com/api/v2/events/2017", headers={"X-TBA-App-Id":"frc-4774:TrueSkill:1.0"})
         events = events.json()
 
         for event in events:
             if event['event_type'] > 5:
                 continue
-            if event['start_date'] < str(datetime.date(datetime.today())):
-                started_events.append(event["key"])
-
-            teams = requests.get("https://www.thebluealliance.com/api/v2/event/"+event['key']+"/teams", headers={"X-TBA-App-Id":"frc-4774:TrueSkill:1.0"})
-            teams = teams.json()
-            self.events[event['key']] = teams
-
-        for event in started_events:
-            matches = requests.get("https://www.thebluealliance.com/api/v2/event/"+event+"/matches", headers={"X-TBA-App-Id":"frc-4774:TrueSkill:1.0"})
-
-            matches = matches.json()
-            all_matches += matches
+            if event['start_date'] <= str(datetime.date(datetime.today()+timedelta(days=1))):
+                matches = requests.get("https://www.thebluealliance.com/api/v2/event/"+event['key']+"/matches", headers={"X-TBA-App-Id":"frc-4774:TrueSkill:1.0"})
+                matches = matches.json()
+                all_matches += matches
         all_matches.sort(key=lambda m: m['time'])
 
         for match in all_matches:

@@ -2,3 +2,4 @@ flask
 trueskill
 slackclient
 GoogleAppEngineCloudStorageClient
+requests-toolbelt
