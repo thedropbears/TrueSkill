@@ -12,7 +12,3 @@ class Slack:
             with gcs.open('/trueskill/slack.txt') as gcs_token_file:
                 slack_token = gcs_token_file.readline().rstrip('\n')
         self.slack_client = SlackClient(slack_token)
-
-    def message(self, channel='#trueskill', **kwargs):
-        self.slack_client.api_call('chat.postMessage', channel=channel,
-            as_user=True, icon_emoji=':robot_face:', **kwargs)

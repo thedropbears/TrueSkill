@@ -15,8 +15,14 @@ trueskill = FrcTrueSkill()
 slack = Slack()
 
 # Get TBA key
-with gcs.open('/trueskill/tba.txt') as gcs_token_file:
-    tba_token = gcs_token_file.readline().rstrip('\n')
+try:
+    with gcs.open('/trueskill/tba.txt') as gcs_token_file:
+        tba_token = gcs_token_file.readline().rstrip('\n')
+except:
+    tba_token = None
+
+# Store predictons
+prediction_msgs = {}
 
 @app.route('/')
 def hello():
@@ -53,28 +59,58 @@ def predict(msg_data):
         red_text += '%s - %s\n' % (r[3:], team_dict[r]['nickname'])
     for b in blue:
         blue_text += '%s - %s\n' % (b[3:], team_dict[b]['nickname'])
-    slack.message(text='*%s - %s*' % (event, match.upper()),
+    retval = send_prediction(event, match, red_text, blue_text, prediction)
+    prediction_msgs[msg_data['match_key']] = retval
+
+def send_prediction(event, match, red_text, blue_text, prediction):
+    return slack.slack_client.api_call('chat.postMessage',
+            channel='trueskill', as_user=True,
+            text='*%s - %s*' % (event, match.upper()),
             attachments=[{'title': '%i%%' % prediction,
                 'text': red_text, 'color': '#ff0000'},
                 {'title': '%i%%' % (100-prediction),
                     'text': blue_text, 'color': '#0000ff'}])
 
+
 def update(msg_data):
     event_key = msg_data['match']['event_key']
     event = msg_data['event_name']
     alliances = msg_data['match']['alliances']
+    match = msg_data['match']['key'].split('_')[1].upper()
     red = alliances['red']
     blue = alliances['blue']
-    trueskill.update(blue['teams'], blue['score'], red['teams'], red['score'])
+    if not match in prediction_msgs:
+        payload = {'team_keys': blue['teams']+red['teams'], 'event_name': event,
+                'match_key': msg_data['match']['key']}
+        predict(payload)
+    result = trueskill.update(blue['teams'], blue['score'], red['teams'], red['score'])
+    return send_update(msg_data['match']['key'], result)
+
+def send_update(match, result):
+    # Find our previous prediction and resend with the winner marked on it
+    prediction = prediction_msgs[match]
+    msg = prediction['message']
+    attachments = msg['attachments']
+    for idx in [0, 1]:
+        if result[idx] == 0:
+            # Alliance won (or tied)
+            attachments[idx]['title'] += ' :trophy:'
+    # Add another attachment with the current ratings
+    attachments.append({'text': list_trueskills(match.split('_')[0])})
+
+    return slack.slack_client.api_call('chat.update', channel=prediction['channel'],
+            ts=prediction['ts'],text=msg['text'],
+            attachments=attachments)
+
+
+def list_trueskills(event_key):
     event_teams = trueskill.get_teams_at_event(event_key)
     skills = [(team['key'], trueskill.skill(team['key']), team['nickname']) for team in event_teams]
     skills = sorted(skills, key=lambda skill: skill[1], reverse=True)
-    match = msg_data['match']['key'].split('_')[1].upper()
     msg = ''
     for skill in skills:
         msg += '%s - %s - %0.1f\n' % (skill[0][3:], skill[2], skill[1])
-    slack.message(text='*%s - %s*' % (event, match),
-            attachments=[{'text':msg}])
+    return msg
 
 @app.errorhandler(500)
 def server_error(e):

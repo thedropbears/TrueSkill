@@ -11,12 +11,14 @@ class FrcTrueSkill:
         self.events = {}
         self.get_previous_matches()
 
-    def update(self, red_alliance, red_score, blue_alliance, blue_score):
-        # Calculate teams per alliance
+    def init_teams(self, red_alliance, blue_alliance):
         for alliance in [red_alliance, blue_alliance]:
             for team in alliance:
                 if not team in self.trueskills:
                     self.trueskills[team] = self.env.Rating()
+
+    def update(self, red_alliance, red_score, blue_alliance, blue_score):
+        self.init_teams(red_alliance, blue_alliance)
         # Update ratings based on result
         if red_score == blue_score:  # Tied
             if red_score == -1:
@@ -32,9 +34,10 @@ class FrcTrueSkill:
         new_ratings = new_red + new_blue
         for rating, team_number in zip(new_ratings, red_alliance + blue_alliance):
             self.trueskills[team_number] = rating
-
+        return ranks
 
     def predict(self, red_alliance, blue_alliance):
+        self.init_teams(red_alliance, blue_alliance)
         proba = self.env.quality([[self.trueskills[team] for team in red_alliance],
                             [self.trueskills[team] for team in blue_alliance]])
         return round(proba*100)
