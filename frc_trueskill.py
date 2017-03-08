@@ -17,22 +17,28 @@ class FrcTrueSkill:
                 if not team in self.trueskills:
                     self.trueskills[team] = self.env.Rating()
 
-    def update(self, red_alliance, red_score, blue_alliance, blue_score):
-        self.init_teams(red_alliance, blue_alliance)
+    def update(self, match_data):
+        alliances = match_data['alliances']
+        self.init_teams(alliances['red']['teams'], alliances['blue']['teams'])
         # Update ratings based on result
-        if red_score == blue_score:  # Tied
-            if red_score == -1:
+        corrected_scores = self.correct_scores(match_data)
+        if not corrected_scores:
+            return
+
+        if corrected_scores['red'] == corrected_scores['blue']:  # Tied
+            if corrected_scores['red'] == -1:
                 return  # No result yet
             ranks = [0, 0]
-        elif red_score > blue_score:  # Red beat blue
+        elif corrected_scores['red'] > corrected_scores['blue']:  # Red beat blue
             ranks = [0, 1]  # Lower is better
         else:
             ranks = [1, 0]
-        new_red, new_blue = self.env.rate([[self.trueskills[number] for number in red_alliance],
-                                      [self.trueskills[number] for number in blue_alliance]], ranks)
+        new_red, new_blue = self.env.rate([[self.trueskills[number] for number in alliances['red']['teams']],
+                                      [self.trueskills[number] for number in alliances['blue']['teams']]], ranks)
         # Store the new values
         new_ratings = new_red + new_blue
-        for rating, team_number in zip(new_ratings, red_alliance + blue_alliance):
+        for rating, team_number in zip(new_ratings,
+                alliances['red']['teams']+alliances['blue']['teams']):
             self.trueskills[team_number] = rating
         return ranks
 
@@ -71,25 +77,28 @@ class FrcTrueSkill:
         all_matches.sort(key=lambda m: m['time'])
 
         for match in all_matches:
-            score = match['score_breakdown']
-            if score is None:
-                continue
+            self.update(match)
 
-            red_stats = score['red']
-            blue_stats = score['blue']
+    def correct_scores(self, match):
+        score = match['score_breakdown']
+        if score is None:
+            return None
 
-            alliances = match['alliances']
-            red = alliances['red']
-            blue = alliances['blue']
+        red_stats = score['red']
+        blue_stats = score['blue']
 
-            if red_stats["rotor3Engaged"]:
-                red['score'] += 100
-            if red_stats["kPaRankingPointAchieved"]:
-                red['score'] += 20
+        alliances = match['alliances']
+        red = alliances['red']
+        blue = alliances['blue']
 
-            if blue_stats["rotor3Engaged"]:
-                blue['score'] += 100
-            if blue_stats["kPaRankingPointAchieved"]:
-                blue['score'] += 20
+        if red_stats["rotor3Engaged"]:
+            red['score'] += 100
+        if red_stats["kPaRankingPointAchieved"]:
+            red['score'] += 20
 
-            self.update(red['teams'], red['score'], blue['teams'], blue['score'])
+        if blue_stats["rotor3Engaged"]:
+            blue['score'] += 100
+        if blue_stats["kPaRankingPointAchieved"]:
+            blue['score'] += 20
+
+        return {'red': red['score'], 'blue': blue['score']}

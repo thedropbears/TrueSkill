@@ -83,7 +83,7 @@ def update(msg_data):
         payload = {'team_keys': blue['teams']+red['teams'], 'event_name': event,
                 'match_key': msg_data['match']['key']}
         predict(payload)
-    result = trueskill.update(blue['teams'], blue['score'], red['teams'], red['score'])
+    result = trueskill.update(msg_data['match'])
     return send_update(msg_data['match']['key'], result)
 
 def send_update(match, result):
