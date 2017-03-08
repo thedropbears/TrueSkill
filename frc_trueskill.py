@@ -1,4 +1,4 @@
-from trueskill import TrueSkill, Rating, rate
+from trueskill import TrueSkill, Rating, rate, BETA, backends
 import argparse
 import requests
 from datetime import datetime, timedelta
@@ -44,9 +44,13 @@ class FrcTrueSkill:
 
     def predict(self, red_alliance, blue_alliance):
         self.init_teams(red_alliance, blue_alliance)
-        proba = self.env.quality([[self.trueskills[team] for team in red_alliance],
-                            [self.trueskills[team] for team in blue_alliance]])
-        return round(proba*100)
+        a = [self.trueskills[t] for t in red_alliance]
+        b = [self.trueskills[t] for t in blue_alliance]
+        deltaMu = sum([x.mu for x in a]) - sum([x.mu for x in b])
+        sumSigma = sum([x.sigma ** 2 for x in a]) + sum([x.sigma ** 2 for x in b])
+        playerCount = len(a) + len(b)
+        denominator = (playerCount * (BETA * BETA) + sumSigma) ** 0.5
+        return round(backends.cdf(deltaMu / denominator)*100)
 
     def skill(self, team):
         if not team in self.trueskills:
