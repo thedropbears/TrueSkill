@@ -79,7 +79,7 @@ def update(msg_data):
     match = msg_data['match']['key'].split('_')[1].upper()
     red = alliances['red']
     blue = alliances['blue']
-    if not match in prediction_msgs:
+    if not msg_data['match']['key'] in prediction_msgs:
         payload = {'team_keys': blue['teams']+red['teams'], 'event_name': event,
                 'match_key': msg_data['match']['key']}
         predict(payload)
