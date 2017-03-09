@@ -9,6 +9,7 @@ class FrcTrueSkill:
         self.env = TrueSkill(draw_probability=0.02)
         self.trueskills = {}
         self.events = {}
+        self.processed_matches = set()
         self.get_previous_matches()
 
     def init_teams(self, red_alliance, blue_alliance):
@@ -18,16 +19,20 @@ class FrcTrueSkill:
                     self.trueskills[team] = self.env.Rating()
 
     def update(self, match_data):
+        if match_data['key'] in self.processed_matches:
+            return None
+        self.processed_matches.add(match_data['key'])
+
         alliances = match_data['alliances']
         self.init_teams(alliances['red']['teams'], alliances['blue']['teams'])
         # Update ratings based on result
         corrected_scores = self.correct_scores(match_data)
         if not corrected_scores:
-            return
+            return None
 
         if corrected_scores['red'] == corrected_scores['blue']:  # Tied
             if corrected_scores['red'] == -1:
-                return  # No result yet
+                return None # No result yet
             ranks = [0, 0]
         elif corrected_scores['red'] > corrected_scores['blue']:  # Red beat blue
             ranks = [0, 1]  # Lower is better

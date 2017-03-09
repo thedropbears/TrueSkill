@@ -84,7 +84,8 @@ def update(msg_data):
                 'match_key': msg_data['match']['key']}
         predict(payload)
     result = trueskill.update(msg_data['match'])
-    return send_update(msg_data['match']['key'], result)
+    if result:
+        return send_update(msg_data['match']['key'], result)
 
 def send_update(match, result):
     # Find our previous prediction and resend with the winner marked on it
