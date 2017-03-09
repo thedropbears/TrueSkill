@@ -21,7 +21,6 @@ class FrcTrueSkill:
     def update(self, match_data):
         if match_data['key'] in self.processed_matches:
             return None
-        self.processed_matches.add(match_data['key'])
 
         alliances = match_data['alliances']
         self.init_teams(alliances['red']['teams'], alliances['blue']['teams'])
@@ -45,6 +44,7 @@ class FrcTrueSkill:
         for rating, team_number in zip(new_ratings,
                 alliances['red']['teams']+alliances['blue']['teams']):
             self.trueskills[team_number] = rating
+        self.processed_matches.add(match_data['key'])
         return ranks
 
     def predict(self, red_alliance, blue_alliance):
@@ -89,16 +89,17 @@ class FrcTrueSkill:
             self.update(match)
 
     def correct_scores(self, match):
-        score = match['score_breakdown']
-        if score is None:
-            return None
-
-        red_stats = score['red']
-        blue_stats = score['blue']
-
         alliances = match['alliances']
         red = alliances['red']
         blue = alliances['blue']
+
+        score = match['score_breakdown']
+        if score is None:
+            return {'red': red['score'], 'blue': blue['score']}
+            # return None
+
+        red_stats = score['red']
+        blue_stats = score['blue']
 
         if red_stats["rotor3Engaged"]:
             red['score'] += 100
