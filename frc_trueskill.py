@@ -1,4 +1,4 @@
-from trueskill import TrueSkill, Rating, rate, BETA, backends
+from trueskill import TrueSkill, Rating, rate, backends
 import argparse
 import requests
 from datetime import datetime, timedelta
@@ -54,7 +54,7 @@ class FrcTrueSkill:
         deltaMu = sum([x.mu for x in a]) - sum([x.mu for x in b])
         sumSigma = sum([x.sigma ** 2 for x in a]) + sum([x.sigma ** 2 for x in b])
         playerCount = len(a) + len(b)
-        denominator = (playerCount * (BETA * BETA) + sumSigma) ** 0.5
+        denominator = (playerCount * (self.env.beta ** 2) + sumSigma) ** 0.5
         return round(backends.cdf(deltaMu / denominator)*100)
 
     def skill(self, team):
