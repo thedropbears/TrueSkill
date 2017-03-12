@@ -6,12 +6,26 @@ ul{
   -webkit-padding-end:4px;
   list-style:none;
 }
-.card{
+* {
+  padding: 0;
+  margin: 0;
+ /* border: white 1px solid;*/
+  box-sizing: border-box;
+}   
+
+.top-icons {
+  vertical-align: middle;
+}
+
+.card {
   color: white;
   margin: 1%;
   display: inline-block;
   background: #F44336;
+   padding: 0;
+  min-height: 50%;
 }
+
 .blue-text{
   color:#2196F3;
 }
@@ -67,7 +81,7 @@ ul{
   width:48.75%;
   height:141px;
   border-right:4px #F44336 solid;
-  background-color:#white;
+  background-color: white;
 }
 #red-team-won{
   text-align:center;
@@ -78,3 +92,81 @@ ul{
   color:white;
   background-color:#F44336;
 }
+ 
+
+.no-bottom-margin {
+  margin-bottom: 0;
+}
+
+#title-box {
+  height: 100%;
+  float: left;
+}
+
+#trueskill-points-div {
+  margin-top: 3%;
+  float: left;
+  width: 35%;
+  height: 100%;
+  /*centers items"*/
+  display:flex;justify-content:center;align-items:center;
+}
+#trueskill-points{
+  margin-top: 3%;
+}
+
+
+h1 {
+  font-weight: bold;
+}
+
+#event-list{
+  float: right;
+  border-left: 1px solid white;
+  height: 100%
+}
+
+.donut-chart svg {
+  pointer-events: none;
+  height: 100%;
+}
+
+.donut-chart svg path {
+  fill: none;
+  stroke-width: 35px;
+  stroke: #19a8ff;
+}
+
+.donut-chart {
+  width: 200px;
+  height: 200px;
+  position: relative;
+  display: inline-block;
+}
+
+.donut-chart p {
+  margin: 0;
+  position: absolute;
+  top: 35%;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 2em;
+}
+
+.donut-chart span {
+  display: block;
+  font-size: 0.5em;
+}
+
+
+/* Just for the purpose of this pen */
+
+body {
+  text-align: center;
+}
+
+.grey svg path {
+  stroke: #ff3333;
+}
+
