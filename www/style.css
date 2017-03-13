@@ -64,7 +64,7 @@ ul {
   display: none;
 }
 
-#blue-team {
+.blue-team {
   text-align: center;
   color: #2196F3;
   float: left;
@@ -74,7 +74,7 @@ ul {
   border-left: 4px #2196F3 solid;
 }
 
-#blue-team-won {
+.blue-team-won {
   text-align: center;
   float: left;
   width: 50%;
@@ -85,7 +85,7 @@ ul {
   background-color: #2196F3;
 }
 
-#red-team {
+.red-team {
   text-align: center;
   color: #F44336;
   float: right;
@@ -95,7 +95,7 @@ ul {
   background-color: white;
 }
 
-#red-team-won {
+.red-team-won {
   text-align: center;
   float: right;
   width: 50%;
