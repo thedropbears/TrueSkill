@@ -38,22 +38,28 @@ function Donut_chart(options) {
 	}
 };
 
-function make_card(red_odds, blue_alliance, red_alliance, match_name, match_location, ts, type) {
+function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score, match_name, match_location, ts) {
 	var blue_team = "blue-team"
 	var red_team = "red-team"
 	var blue_odds = String(100 - red_odds) + '%'
 	red_odds = String(red_odds) + "%"
 
-	if (red_odds === "%"){
+	if (red_odds === "%") {
 		blue_odds = "<br>"
 		red_odds = "<br>"
 	}
 
-	if (type === 'match_blue') {
+	if (blue_score === "" || red_score === "") {
+		blue_score = "<br>"
+		blue_score = "<br>"
+	}
+	else if (blue_score > red_score){
 		blue_team = "blue-team-won"
-	} else if (type === 'match_red') {
+	}
+	else if (red_score > blue_score){
 		red_team = "red-team-won"
 	}
+
 
 	return "<div class=\"match-card mdl-card mdl-shadow--4dp card " + ts + "\"> \
             <div class=\"mdl-card__title white-red\"> \
@@ -95,6 +101,37 @@ function change_card(win, ts) {
 var events = []
 var team_events = []
 var team = '4774'
+
+$.ajax({
+	type: "GET",
+	headers: {
+		"X-TBA-App-Id": "frc-4774:TrueSkill:1.0"
+	},
+	url: "https://www.thebluealliance.com/api/v2/events/2017",
+	dataType: "json",
+	success: function (result) {
+		events = result
+		
+		for (event in events) {
+		if (events[event].event_type  > 5){
+			continue
+		}
+
+		var start_date_data = events[event].start_date
+		var end_date_data = events[event].end_date;
+
+		var start_date = Date.UTC(2017, parseInt(start_date_data.substring(5,7)-1), parseInt(start_date_data.substring(8,10)))
+		var end_date = Date.UTC(2017, parseInt(end_date_data.substring(5,7)-1), parseInt(end_date_data.substring(8,10)))
+		var current_time = (new Date).getTime();
+
+		if (current_time > start_date && current_time < end_date){
+			$("#event-selector").append('<option>' + events[event].short_name + '</option>');
+		}
+	}
+
+
+	}
+})
 
 function set_team(team) {
 	$.ajax({
@@ -144,6 +181,7 @@ function get_team_events(team) {
 				team_events.push(result[event].key)
 			}
 			get_team_matches(team);
+<<<<<<< HEAD
 	
 	},
 		error: function () {
@@ -191,21 +229,65 @@ for (event in team_events){
 		error: function () {
 			alert("ERROR");
 		}
+=======
+
+		},
+>>>>>>> e2ac65c... added current event selector + auto win in make_card()
 	});
-}}
+}
+
+function get_team_matches(team) {
+	$("#card-div").empty() //.prepend("<div id=\"p2\" class=\"mdl-progress mdl-js-progress mdl-progress__indeterminate\"></div>");
+	for (event in team_events) {
+		$.ajax({
+			type: "GET",
+			headers: {
+				"X-TBA-App-Id": "frc-4774:TrueSkill:1.0"
+			},
+			url: "https://www.thebluealliance.com/api/v2/team/frc" + team + "/event/" + team_events[event] + "/matches",
+			dataType: "json",
+			success: function (result) {
+				if (result.length === 0) {
+					return
+				}
+				result.sort(function (a, b) {
+					return a.time - b.time
+				})
+				for (match in result) {
+					var winner = ""
+					var current_match = result[match]
+
+					if (current_match.alliances.blue.score < 0) {
+						return
+					}
+
+					$("#card-div").prepend(make_card("", current_match.alliances.blue.teams, current_match.alliances.red.teams,
+						current_match.alliances.blue.score, current_match.alliances.red.score,
+						current_match.comp_level.toUpperCase() + String(current_match.match_number),
+						team_events_names[current_match.event_key], current_match.time))
+				}
+
+			},
+
+		});
+	}
+}
 
 $(function () {
 
-	if (events != []) {
-		for (event in events) {
-			$("#event-selector").append('<option>' + events[event].short_name + '</option>');
-		}
-	}
 
-
+<<<<<<< HEAD
 	$("#team-input").focusout(function () {
 		team = $("#team-input").val();
 		set_team(team);
 		get_team_events(team);
+=======
+	$("#team-input").keypress(function (e) {
+		if (e.which == 13) {
+			team = $("#team-input").val();
+			set_team(team);
+			get_team_events(team);
+		}
+>>>>>>> e2ac65c... added current event selector + auto win in make_card()
 	});
 });
