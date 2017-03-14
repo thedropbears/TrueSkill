@@ -55,7 +55,7 @@ class FrcTrueSkill:
         sumSigma = sum([x.sigma ** 2 for x in a]) + sum([x.sigma ** 2 for x in b])
         playerCount = len(a) + len(b)
         denominator = (playerCount * (self.env.beta ** 2) + sumSigma) ** 0.5
-        return round(backends.cdf(deltaMu / denominator)*100)
+        return backends.cdf(deltaMu / denominator)
 
     def skill(self, team):
         if not team in self.trueskills:

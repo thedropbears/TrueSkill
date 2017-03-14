@@ -65,12 +65,12 @@ def predict(msg_data):
 
 def send_prediction(event, match, red_text, blue_text, prediction):
     return slack.api_call('chat.postMessage',
-            channel='trueskill', as_user=True,
-            text='*%s - %s*' % (event, match.upper()),
-            attachments=[{'title': '%i%%' % prediction,
-                'text': red_text, 'color': '#ff0000'},
-                {'title': '%i%%' % (100-prediction),
-                    'text': blue_text, 'color': '#0000ff'}])
+        channel='trueskill', as_user=True,
+        text='*%s - %s*' % (event, match.upper()),
+        attachments=[
+            {'title': format(prediction, '.0%'), 'text': red_text, 'color': '#ff0000'},
+            {'title': format(1-prediction, '.0%'), 'text': blue_text, 'color': '#0000ff'}
+        ])
 
 
 def update(msg_data):
