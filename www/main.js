@@ -100,8 +100,13 @@ function change_card(win, ts) {
 
 var events = []
 var team_events = []
-var team = '4774'
+var team_events_names = {}
+var event_name_event = ""
+var team = ''
+var trueskill_score = {}
+var trueskill_prediction = {}
 
+get_trueskill()
 $.ajax({
 	type: "GET",
 	headers: {
@@ -111,7 +116,6 @@ $.ajax({
 	dataType: "json",
 	success: function (result) {
 		events = result
-		
 		for (event in events) {
 		if (events[event].event_type  > 5){
 			continue
@@ -152,9 +156,10 @@ function set_team(team) {
 				$(this).append('<svg preserveAspectRatio="xMidYMid" xmlns:xlink="http://www.w3.org/1999/xlink" id="donutChartSVG' + index + '"><path d="M100,100" /></svg>');
 				var p = new Donut_chart({
 					element: $('#donutChartSVG' + index),
-					percent: $(this).attr('data-percent')
+					percent: 50,
 				});
 				p.animate();
+				$("#trueskill-info").empty().append("50 <span>85th percetile</span>")
 			});
 
 		},
@@ -181,7 +186,6 @@ function get_team_events(team) {
 				team_events.push(result[event].key)
 			}
 			get_team_matches(team);
-<<<<<<< HEAD
 	
 	},
 		error: function () {
@@ -229,15 +233,12 @@ for (event in team_events){
 		error: function () {
 			alert("ERROR");
 		}
-=======
 
-		},
->>>>>>> e2ac65c... added current event selector + auto win in make_card()
 	});
 }
 
 function get_team_matches(team) {
-	$("#card-div").empty() //.prepend("<div id=\"p2\" class=\"mdl-progress mdl-js-progress mdl-progress__indeterminate\"></div>");
+	$("#card-team-div").empty() //.prepend("<div id=\"p2\" class=\"mdl-progress mdl-js-progress mdl-progress__indeterminate\"></div>");
 	for (event in team_events) {
 		$.ajax({
 			type: "GET",
@@ -261,7 +262,7 @@ function get_team_matches(team) {
 						return
 					}
 
-					$("#card-div").prepend(make_card("", current_match.alliances.blue.teams, current_match.alliances.red.teams,
+					$("#card-team-div").prepend(make_card("", current_match.alliances.blue.teams, current_match.alliances.red.teams,
 						current_match.alliances.blue.score, current_match.alliances.red.score,
 						current_match.comp_level.toUpperCase() + String(current_match.match_number),
 						team_events_names[current_match.event_key], current_match.time))
@@ -272,22 +273,98 @@ function get_team_matches(team) {
 		});
 	}
 }
+function set_event(event_name){
+	var event_key = ""
+	for (event in events){
+		if (events[event].short_name === event_name){
+			event_key = events[event].key
+			$("#event-info").removeClass("hidden")
+			$("#event-name").text(events[event].short_name)
+			$("#event-location").text(events[event].locality)
+			$("#event-start-date").text(events[event].start_date)
+			$("#event-end-date").text(events[event].end_date)
+			event_name_event = events[event].short_name
+			get_event_matches(event_key)
+			break
+	}}
+}
+
+function get_event_matches(key){
+	$("#card-event-div").empty() //.prepend("<div id=\"p2\" class=\"mdl-progress mdl-js-progress mdl-progress__indeterminate\"></div>");
+		$.ajax({
+			type: "GET",
+			headers: {
+				"X-TBA-App-Id": "frc-4774:TrueSkill:1.0"
+			},
+			url: "https://www.thebluealliance.com/api/v2/event/"+key+"/matches",
+			dataType: "json",
+			success: function (result) {
+				if (result.length === 0) {
+					return
+				}
+				result.sort(function (a, b) {
+					return a.time - b.time
+				})
+				for (match in result) {
+					var winner = ""
+					var current_match = result[match]
+
+					if (current_match.alliances.blue.score < 0) {
+						return
+					}
+
+					$("#card-event-div").prepend(make_card("", current_match.alliances.blue.teams, current_match.alliances.red.teams,
+						current_match.alliances.blue.score, current_match.alliances.red.score,
+						current_match.comp_level.toUpperCase() + String(current_match.match_number),
+						event_name_event, current_match.time))
+				}
+
+			},
+
+		});
+	
+}
+function get_trueskill(){
+	//team truskill json
+	$.ajax({
+			type: "GET",
+			url: "",
+			dataType: "json",
+			success: function (result) {
+			trueskill_score = result;
+
+			},
+		});
+	//match prediction json
+	$.ajax({
+			type: "GET",
+			url: "",
+			dataType: "json",
+			success: function (result) {
+			trueskill_score = result;
+
+			},
+
+		});
+}
 
 $(function () {
 
+$('select').on('change', function() {
+  	 set_event(this.value);
+	});
 
-<<<<<<< HEAD
-	$("#team-input").focusout(function () {
-		team = $("#team-input").val();
-		set_team(team);
-		get_team_events(team);
-=======
 	$("#team-input").keypress(function (e) {
 		if (e.which == 13) {
 			team = $("#team-input").val();
 			set_team(team);
 			get_team_events(team);
 		}
->>>>>>> e2ac65c... added current event selector + auto win in make_card()
 	});
+	$(".refresh").click(function(){
+		get_truskill()
+		set_team(team)
+		get_team_events(team)
+		set_event(event_name_event)
+	})
 });

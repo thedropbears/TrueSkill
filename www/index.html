@@ -29,6 +29,11 @@
         <div class="mdl-layout-spacer"></div>
         <div class="mdl-layout-spacer"></div>
         <nav class="mdl-navigation">
+
+        <button class="refresh mdl-button mdl-js-button mdl-button--icon mdl-button">
+             <i class="mdl-color-text--white-500 material-icons" role="presentation">refresh</i>
+        </button>
+
           <a class="mdl-navigation__link" href="http://www.thedropbears.org.au/" target="_blank">The Dropbears - 4774</a>
           <a class="mdl-navigation__link" href="https://github.com/thedropbears/trueskill/" target="_blank">
             <i class="mdl-color-text--white-500 material-icons" role="presentation">code</i></a>
@@ -77,8 +82,8 @@
               </div>
             </div>
             <div id="trueskill-points-div">
-              <div class="donut-chart" data-percent="85">
-                <p>27 <span>85th percetile</span></p>
+              <div class="donut-chart">
+                <p id="trueskill-info" ></p>
               </div>
             </div>
             <div id='event-list-div'>
@@ -90,7 +95,7 @@
           </div>
 
           <!-- team match card -->
-<div id="card-div">
+<div id="card-team-div">
     
 </div>
 
@@ -113,6 +118,9 @@
               </select>
             </div>
           </div>
+<div id="card-event-div">
+    
+</div>
 
         </div>
 
