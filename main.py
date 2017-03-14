@@ -112,6 +112,11 @@ def send_update(match, result):
             attachments=attachments)
 
 
+@app.route('/api/trueskill/<int:team_number>')
+def api_trueskill(team_number):
+    return str(trueskill.skill('frc%d' % team_number)), {'Content-Type': 'text/plain'}
+
+
 def get_trueskills_list(event_key):
     event_teams = trueskill.get_teams_at_event(event_key)
     skills = [(trueskill.skill(team['key']), int(team['key'][3:]), team['nickname']) for team in event_teams]
