@@ -64,11 +64,7 @@ ul {
   display: none;
 }
 
-.wide-card {
-  width: 660px;
-}
-
-#blue-team {
+.blue-team {
   text-align: center;
   color: #2196F3;
   float: left;
@@ -78,7 +74,7 @@ ul {
   border-left: 4px #2196F3 solid;
 }
 
-#blue-team-won {
+.blue-team-won {
   text-align: center;
   float: left;
   width: 50%;
@@ -89,7 +85,7 @@ ul {
   background-color: #2196F3;
 }
 
-#red-team {
+.red-team {
   text-align: center;
   color: #F44336;
   float: right;
@@ -99,7 +95,7 @@ ul {
   background-color: white;
 }
 
-#red-team-won {
+.red-team-won {
   text-align: center;
   float: right;
   width: 50%;
@@ -114,13 +110,14 @@ ul {
 }
 
 #title-box {
-  height: 220px;
+  height: 100%;
   float: left;
 }
 
 #trueskill-points-div {
+  margin-top: 3%;
   float: left;
-  width: 200px;
+  width: 35%;
   height: 100%;
   /*centers items"*/
   display: flex;
@@ -129,13 +126,14 @@ ul {
 }
 
 #trueskill-points {
+  margin-top: 3%;
 }
 
 h1 {
   font-weight: bold;
 }
 
-#event-list {
+#event-list-div {
   float: right;
   height: 100%
 }
@@ -156,30 +154,8 @@ h1 {
   height: 200px;
   position: relative;
   display: inline-block;
-  margin-top: 10px;
 }
 
-.team-info {
-  width:260px;
-  padding:0;
-  margin:0
-}
-
-.team-location{
-  width: 200px;
-  padding: 0;
-}
-
-.event-info {
-  width:460px;
-  padding:0;
-  margin:0
-}
-
-.event-location{
-  width: 200px;
-  padding: 0;
-}
 .donut-chart p {
   margin: 0;
   position: absolute;
@@ -194,6 +170,9 @@ h1 {
   display: block;
   font-size: 0.5em;
 }
+
+
+/* Just for the purpose of this pen */
 
 body {
   text-align: center;
