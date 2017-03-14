@@ -6,7 +6,6 @@ import os
 from flask import Flask, jsonify, request
 from frc_trueskill import FrcTrueSkill
 from slack import get_slackclient
-import cloudstorage as gcs
 
 app = Flask(__name__)
 slack = get_slackclient()
@@ -14,6 +13,7 @@ trueskill = FrcTrueSkill()
 
 # Get TBA key
 try:
+    import cloudstorage as gcs
     with gcs.open('/trueskill/tba.txt') as gcs_token_file:
         tba_token = gcs_token_file.readline().rstrip('\n')
 except:
