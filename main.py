@@ -44,6 +44,13 @@ def tba_webhook():
     return msg_type
 
 
+@app.route('/api/predict/<red_alliance>/<blue_alliance>')
+def api_predict(red_alliance, blue_alliance):
+    red_alliance = ['frc%d' % int(n) for n in red_alliance.split(',')]
+    blue_alliance = ['frc%d' % int(n) for n in blue_alliance.split(',')]
+    return str(trueskill.predict(red_alliance, blue_alliance)), {'Content-Type': 'text/plain'}
+
+
 def predict(msg_data):
     blue = msg_data['team_keys'][0:3]
     red = msg_data['team_keys'][3:6]
