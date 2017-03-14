@@ -5,14 +5,14 @@ import logging
 import os
 from flask import Flask, request
 from frc_trueskill import FrcTrueSkill
-from slack import Slack
+from slack import get_slackclient
 import cloudstorage as gcs
 
 app = Flask(__name__)
 trueskill = FrcTrueSkill()
 
 # Set up Slack integration
-slack = Slack()
+slack = get_slackclient()
 
 # Get TBA key
 try:
@@ -62,8 +62,9 @@ def predict(msg_data):
     retval = send_prediction(event, match, red_text, blue_text, prediction)
     prediction_msgs[msg_data['match_key']] = retval
 
+
 def send_prediction(event, match, red_text, blue_text, prediction):
-    return slack.slack_client.api_call('chat.postMessage',
+    return slack.api_call('chat.postMessage',
             channel='trueskill', as_user=True,
             text='*%s - %s*' % (event, match.upper()),
             attachments=[{'title': '%i%%' % prediction,
@@ -99,7 +100,7 @@ def send_update(match, result):
     # Add another attachment with the current ratings
     attachments.append({'text': list_trueskills(match.split('_')[0])})
 
-    return slack.slack_client.api_call('chat.update', channel=prediction['channel'],
+    return slack.api_call('chat.update', channel=prediction['channel'],
             ts=prediction['ts'],text=msg['text'],
             attachments=attachments)
 
