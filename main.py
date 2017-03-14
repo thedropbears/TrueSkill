@@ -3,7 +3,7 @@ appengine.monkeypatch()
 
 import logging
 import os
-from flask import Flask, request
+from flask import Flask, jsonify, request
 from frc_trueskill import FrcTrueSkill
 from slack import get_slackclient
 import cloudstorage as gcs
@@ -105,14 +105,29 @@ def send_update(match, result):
             attachments=attachments)
 
 
-def list_trueskills(event_key):
+def get_trueskills_list(event_key):
     event_teams = trueskill.get_teams_at_event(event_key)
-    skills = [(team['key'], trueskill.skill(team['key']), team['nickname']) for team in event_teams]
-    skills = sorted(skills, key=lambda skill: skill[1], reverse=True)
-    msg = ''
-    for skill in skills:
-        msg += '%s - %s - %0.1f\n' % (skill[0][3:], skill[2], skill[1])
-    return msg
+    skills = [(trueskill.skill(team['key']), int(team['key'][3:]), team['nickname']) for team in event_teams]
+    skills.sort(reverse=True)
+    return skills
+
+
+def list_trueskills(event_key):
+    msg = []
+    for skill, team_number, nickname in get_trueskills_list(event_key):
+        msg.append('%s - %s - %.1f\n' % (team_number, nickname, skill))
+    return ''.join(msg)
+
+
+@app.route('/trueskills/<event_key>')
+def list_trueskills_http(event_key):
+    return list_trueskills(event_key), {'Content-Type': 'text/plain; charset=utf-8'}
+
+
+@app.route('/api/trueskills/<event_key>')
+def api_trueskills(event_key):
+    return jsonify(get_trueskills_list(event_key))
+
 
 @app.errorhandler(500)
 def server_error(e):
