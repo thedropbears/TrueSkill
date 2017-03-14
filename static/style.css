@@ -8,6 +8,10 @@ ul {
   list-style: none;
 }
 
+li {
+  list-style-type: none;
+}
+
 * {
   padding: 0;
   margin: 0;
@@ -109,17 +113,28 @@ ul {
   margin-bottom: 0;
 }
 
+.wide-card {
+  width: 660px;
+  height: 220px;
+}
+
+.team-info {
+    width: 260px;
+    padding: 0;
+    margin: 0;
+    float: left;
+}
+
 #title-box {
   height: 100%;
   float: left;
 }
 
 #trueskill-points-div {
-  margin-top: 3%;
+  margin-top: 10px;
   float: left;
-  width: 35%;
-  height: 100%;
-  /*centers items"*/
+  width: 200px;
+  height: 200px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -135,6 +150,7 @@ h1 {
 
 #event-list-div {
   float: right;
+  width: 200px;
   height: 100%
 }
 
