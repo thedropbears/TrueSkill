@@ -9,10 +9,8 @@ from slack import get_slackclient
 import cloudstorage as gcs
 
 app = Flask(__name__)
-trueskill = FrcTrueSkill()
-
-# Set up Slack integration
 slack = get_slackclient()
+trueskill = FrcTrueSkill()
 
 # Get TBA key
 try:
