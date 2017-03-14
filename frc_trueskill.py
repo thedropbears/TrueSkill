@@ -94,21 +94,23 @@ class FrcTrueSkill:
         blue = alliances['blue']
 
         score = match['score_breakdown']
+        red_score = red['score']
+        blue_score = blue['score']
         if score is None:
-            return {'red': red['score'], 'blue': blue['score']}
+            return {'red': red_score, 'blue': blue_score}
             # return None
 
         red_stats = score['red']
         blue_stats = score['blue']
 
         if red_stats["rotor3Engaged"]:
-            red['score'] += 100
+            red_score += 100
         if red_stats["kPaRankingPointAchieved"]:
-            red['score'] += 20
+            red_score += 20
 
         if blue_stats["rotor3Engaged"]:
-            blue['score'] += 100
+            blue_score += 100
         if blue_stats["kPaRankingPointAchieved"]:
-            blue['score'] += 20
+            blue_score += 20
 
-        return {'red': red['score'], 'blue': blue['score']}
+        return {'red': red_score, 'blue': blue_score}
