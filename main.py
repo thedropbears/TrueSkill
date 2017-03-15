@@ -22,13 +22,17 @@ except:
 # Store predictons
 prediction_msgs = {}
 
+trueskill_predictions = {}
+
+
 @app.route('/')
 def hello():
-    return 'Hello World!'
+    return app.send_static_file('index.html')
 
 
 @app.route('/tba-webhook', methods=['POST'])
 def tba_webhook():
+    print("prediction")
     msg_data = request.json['message_data']
     msg_type = request.json['message_type']
     if msg_type == 'verification':
@@ -49,6 +53,29 @@ def api_predict(red_alliance, blue_alliance):
     return str(trueskill.predict(red_alliance, blue_alliance)), {'Content-Type': 'text/plain'}
 
 
+@app.route('/predictions')
+def give_predictions():
+    return str(trueskill_predictions)
+
+
+@app.route('/team_trueskill/<team>')
+def team_trueskill(team):
+    return str(trueskill.skill(team))
+
+
+@app.route('/event_trueskill_ranking/<event>')
+def event_trueskil(event):
+    event_teams = trueskill.get_teams_at_event(event)
+    skills = [(team['key'], trueskill.skill(team['key']), team['nickname']) for team in event_teams]
+    skills = sorted(skills, key=lambda skill: skill[1], reverse=True)
+    msg = ''
+    num = 0
+    for skill in skills:
+        num += 1
+        msg += '<li>%s.  %s - %s - %0.1f\n</li> \n' % (str(num), skill[0][3:], skill[2], skill[1])
+    return msg.encode('utf-8').strip()
+
+
 def predict(msg_data):
     blue = msg_data['team_keys'][0:3]
     red = msg_data['team_keys'][3:6]
@@ -60,6 +87,8 @@ def predict(msg_data):
     blue_text = ''
     teams = trueskill.get_teams_at_event(event_key)
     team_dict = dict(zip([team['key'] for team in teams], teams))
+
+    trueskill_predictions[msg_data['match_key']] = prediction
     for r in red:
         red_text += '%s - %s\n' % (r[3:], team_dict[r]['nickname'])
     for b in blue:
@@ -124,8 +153,8 @@ def get_trueskills_list(event_key):
 
 def list_trueskills(event_key):
     msg = []
-    for skill, team_number, nickname in get_trueskills_list(event_key):
-        msg.append('%s - %s - %.1f\n' % (team_number, nickname, skill))
+    for skill, team_number, nickname in enumerate(get_trueskills_list(event_key), start=1):
+        msg.append('%d. %s - %s - %.1f\n' % (i, team_number, nickname, skill))
     return ''.join(msg)
 
 

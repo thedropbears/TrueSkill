@@ -38,7 +38,7 @@ function Donut_chart(options) {
 	}
 };
 
-function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score, match_name, match_location, ts) {
+function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score, match_name, match_location, match_id) {
 	var blue_team = "blue-team"
 	var red_team = "red-team"
 	var blue_odds = String(100 - red_odds) + '%'
@@ -63,13 +63,12 @@ function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score,
 		red_team = "red-team-won"
 		blue_team = "blue-team-won"
 	}
-
-	return "<div class=\"match-card mdl-card mdl-shadow--4dp card " + ts + "\"> \
+	return "<div class=\"match-card mdl-card mdl-shadow--4dp card " + match_id + "\"> \
             <div class=\"mdl-card__title white-red\"> \
               <h2 class=\"mdl-card__title-text\">" + match_name + " - " + match_location + "</h2> \
             </div>\
             <div class=\"mdl-card__supporting-text team\">\
-              <div class=\'" + blue_team + " " + ts + "\'>\
+              <div class=\'" + blue_team + " " + match_id + "\'>\
                 <ul>\
                   <li>" + blue_odds + "</li>\
 				  <li><b>" + String(blue_score) + "</b></li>\
@@ -78,29 +77,29 @@ function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score,
                   <li>" + blue_alliance[2].slice(3) + " - " + get_team_name(blue_alliance[2]) +"</li>\
                 </ul>\
               </div>\
-              	<div class=\'" + red_team + " " + ts + "\'>\
+              	<div class=\'" + red_team + " " + match_id + "\'>\
                 <ul>\
                   <li>" + String(red_odds) + "</li>\
                   <li>" + red_alliance[0] + "</li>\
                   <li>" + red_alliance[1] + "</li>\
                   <li>" + red_alliance[2] + "</li>\
 				  <li><b>" + String(red_score) + "</b></li>\
-                  <li>" + red_alliance[0].slice(3) + " - " + get_team_name(red_alliance[0]) + "</li>\
-                  <li>" + red_alliance[1].slice(3) + " - " + get_team_name(red_alliance[1]) +"</li>\
-                  <li>" + red_alliance[2].slice(3) + " - " + get_team_name(red_alliance[2]) +"</li>\
+                  <li>" + red_alliance[0].substring(3,10) + " - " + team_names[red_alliance[0]] + "</li>\
+                  <li>" + red_alliance[1].substring(3,10) + " - " + team_names[red_alliance[1]] +"</li>\
+                  <li>" + red_alliance[2].substring(3,10) + " - " + team_names[red_alliance[2]] +"</li>\
                 </ul>\
               </div>\
             </div>\
           </div>"
 }
 
-function change_card(win, ts) {
+function change_card(win, match_id) {
 	console.log("helo")
 	if (win === 'red') {
-		$('.' + ts + '.red-team').removeClass('red-team').addClass("red-team-won")
+		$('.' + match_id + '.red-team').removeClass('red-team').addClass("red-team-won")
 	} else if (win === 'blue') {
-		console.log('.' + ts + '.blue-team')
-		$('.' + ts + '.blue-team').removeClass('blue-team').addClass("blue-team-won")
+		console.log('.' + match_id + '.blue-team')
+		$('.' + match_id + '.blue-team').removeClass('blue-team').addClass("blue-team-won")
 
 	}
 }
@@ -111,10 +110,12 @@ var team_events = []
 var team_events_names = {}
 var event_name_event = ""
 var team = ''
-var trueskill_score = {}
 var trueskill_prediction = {}
+var team_names = {}
+var rank_list = []
 
-get_trueskill()
+get_trueskill_predictions()
+get_team_names(0)
 $.ajax({
 	type: "GET",
 	headers: {
@@ -133,7 +134,7 @@ $.ajax({
 		var end_date_data = events[event].end_date;
 
 		var start_date = Date.UTC(2017, parseInt(start_date_data.substring(5,7)-1), parseInt(start_date_data.substring(8,10)))
-		var end_date = Date.UTC(2017, parseInt(end_date_data.substring(5,7)-1), parseInt(end_date_data.substring(8,10)))
+		var end_date = Date.UTC(2017, parseInt(end_date_data.substring(5,7)-1), parseInt(end_date_data.substring(8,10))+1)
 		var current_time = (new Date).getTime();
 
 		if (current_time > start_date && current_time < end_date){
@@ -159,15 +160,14 @@ function set_team(team) {
 			$("#team-name").text(result.nickname)
 			$("#team-location").text(result.locality)
 
-
 			$('.donut-chart').each(function (index) {
 				$(this).append('<svg preserveAspectRatio="xMidYMid" xmlns:xlink="http://www.w3.org/1999/xlink" id="donutChartSVG' + index + '"><path d="M100,100" /></svg>');
 				var p = new Donut_chart({
 					element: $('#donutChartSVG' + index),
-					percent: 50,
+					percent: 100,
 				});
 				p.animate();
-				$("#trueskill-info").empty().append("50 <span>85th percetile</span>")
+				get_trueskill_team_rank('frc' + result.team_number)
 			});
 
 		},
@@ -263,17 +263,30 @@ function get_team_matches(team) {
 					return a.time - b.time
 				})
 				for (match in result) {
-					var winner = ""
 					var current_match = result[match]
+					prediction = trueskill_prediction[current_match.key]
 
 					if (current_match.alliances.blue.score < 0) {
-						return
+						current_match.alliances.blue.score = current_match.alliances.red.score = ""
+						if (prediction === undefined ){
+							continue
+						}
+					}
+					if (prediction === undefined ){
+							prediction = ""
+						}
+					if (current_match.comp_level != 'qm'){
+						match_name = current_match.comp_level.toUpperCase() + String(current_match.match_number)+ "." + String(current_match.set_number)
+					}
+					else{
+						match_name = current_match.comp_level.toUpperCase() + String(current_match.match_number)
 					}
 
-					$("#card-team-div").prepend(make_card("", current_match.alliances.blue.teams, current_match.alliances.red.teams,
+					$("#card-team-div").prepend(make_card(prediction, current_match.alliances.blue.teams, current_match.alliances.red.teams,
 						current_match.alliances.blue.score, current_match.alliances.red.score,
-						current_match.comp_level.toUpperCase() + String(current_match.match_number),
-						team_events_names[current_match.event_key], current_match.time))
+						match_name,
+						team_events_names[current_match.event_key], current_match.key))
+	
 				}
 
 			},
@@ -292,10 +305,11 @@ function set_event(event_name){
 			$("#event-start-date").text(events[event].start_date)
 			$("#event-end-date").text(events[event].end_date)
 			event_name_event = events[event].short_name
+
+			get_trueskill_event_rankings(event_key)
 			get_event_matches(event_key)
-			break
+			break}
 	}}
-}
 
 function get_event_matches(key){
 	$("#card-event-div").empty() //.prepend("<div id=\"p2\" class=\"mdl-progress mdl-js-progress mdl-progress__indeterminate\"></div>");
@@ -316,15 +330,29 @@ function get_event_matches(key){
 				for (match in result) {
 					var winner = ""
 					var current_match = result[match]
+				
+				prediction = trueskill_prediction[current_match.key]
 
 					if (current_match.alliances.blue.score < 0) {
-						return
+						current_match.alliances.blue.score = current_match.alliances.red.score = ""
+						if (prediction === undefined ){
+							continue
+						}
+					}
+					if (prediction === undefined ){
+							prediction = ""
+						}
+					if (current_match.comp_level != 'qm'){
+						match_name = current_match.comp_level.toUpperCase() + String(current_match.match_number)+ "." + String(current_match.set_number)
+					}
+					else{
+						match_name = current_match.comp_level.toUpperCase() + String(current_match.match_number)
 					}
 
-					$("#card-event-div").prepend(make_card("", current_match.alliances.blue.teams, current_match.alliances.red.teams,
+					$("#card-event-div").prepend(make_card(prediction, current_match.alliances.blue.teams, current_match.alliances.red.teams,
 						current_match.alliances.blue.score, current_match.alliances.red.score,
-						current_match.comp_level.toUpperCase() + String(current_match.match_number),
-						event_name_event, current_match.time))
+						match_name,
+						event_name_event, current_match.key))
 				}
 
 			},
@@ -332,16 +360,30 @@ function get_event_matches(key){
 		});
 	
 }
-function get_trueskill(){
+function get_trueskill_event_rankings(event){
 	//team truskill json
 	$.ajax({
 			type: "GET",
-			url: "http://localhost:8080/trueskill_rankings",
-			dataType: "json",
-			success: function (result) {
-			trueskill_score = result;
+			url: "http://localhost:8080/event_trueskill_ranking/"+event,
+			dataType: "text",
+			success: function(result){
+				$("#event-ranking").empty().append(result)
 			},
-		});
+	});
+}
+function get_trueskill_team_rank(team){
+	$.ajax({
+			type: "GET",
+			url: "http://localhost:8080/team_trueskill/"+team,
+			dataType: "text",
+			success: function(result){
+				$("#trueskill-info").empty().append(result + "<span>TrueSkill Points</span>")
+				
+			}
+		})
+		};		
+
+function get_trueskill_predictions(){
 	//match prediction json
 	$.ajax({
 			type: "GET",
@@ -351,41 +393,48 @@ function get_trueskill(){
 			trueskill_prediction = result;
 			},
 
-		});
-}
-function get_team_name(team_number){
-	data =  $.ajax({
+		});}
+var page = 0
+var loaded = false
+function get_team_names(page_num){
+	page = page_num
+	loaded = false
+	 $.ajax({
 			type: "GET",
 			headers: {
 				"X-TBA-App-Id": "frc-4774:TrueSkill:1.0"
 			},
-			url: "https://www.thebluealliance.com/api/v2/team/"+team_number,
+			url: "https://www.thebluealliance.com/api/v2/teams/"+page_num,
 			dataType: "json",
-			/*success: function (result) {
-				console.log(result.nickname)
-				name = result
-			},*/
-			async: !1,
+			success: function(result){
+				if (result.length === 0){
+					loaded = true
+					return
+				}
+				for (team in result){
+					team_names[result[team].key] = result[team].nickname
+				}
+				get_team_names(page += 1)
+			}
 
 		});
-	return data.responseJSON.nickname
 }	
 
 $(function () {
-
 $('select').on('change', function() {
-  	 set_event(this.value);
+	if (loaded){
+  	 set_event(this.value);}
 	});
 
 	$("#team-input").keypress(function (e) {
+		if (loaded){
 		if (e.which == 13) {
 			team = $("#team-input").val();
 			set_team(team);
-			get_team_events(team);
-		}
+			get_team_events(team);}}
 	});
 	$(".refresh").click(function(){
-		get_truskill()
+		get_trueskill_predictions()
 		set_team(team)
 		get_team_events(team)
 		set_event(event_name_event)
