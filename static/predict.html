@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>FRC Prediction</title>
+        <link rel="icon" href="img/favicon.ico" type="image/x-icon">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+    </head>
+    <body>
+        <h1>Frc Prediction</h1><br>
+        
+        <form>
+            Red 1: <input id="r1" type="text">
+            Red 2: <input id="r2" type="text">
+            Red 3: <input id="r3" type="text">
+            <br>
+            <br>
+            Blue 1: <input id="b1" type="text"> 
+            Blue 2: <input id="b2" type="text"> 
+            Blue 3: <input id="b3" type="text"> 
+            <br><br>
+            <button id="submit" type="button">Submit</button>
+        </form>
+<p id="result"></p>
+
+    </body>
+    <script>
+        $(function(){
+            $("#submit").click(function(){
+            $.ajax({
+			type: "GET",
+			url: "'http://localhost:8080/api/predict/" + $("#r1").val() + "," + $("#r2").val() + "," + $("#r3").val() + "/"
+             + $("#b1").val() + "," + $("#b2").val() + "," + $("#b3").val(),
+			dataType: "text",
+			success: function(result){
+				$("#result").empty().append(result + '%')
+				
+			}
+        })})
+        })
+    </script>
+</html>

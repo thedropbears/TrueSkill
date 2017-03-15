@@ -76,6 +76,11 @@ def event_trueskil(event):
     return msg.encode('utf-8').strip()
 
 
+@app.route('/predict')
+def send_predict_page():
+    return app.send_static_file('predict.html')
+
+
 def predict(msg_data):
     blue = msg_data['team_keys'][0:3]
     red = msg_data['team_keys'][3:6]
