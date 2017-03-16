@@ -165,7 +165,7 @@ function set_team(team) {
 					percent: 100,
 				});
 				p.animate();
-				get_trueskill_team_rank('frc' + result.team_number)
+				get_trueskill_team_rank(result.team_number)
 			});
 
 		},
@@ -373,7 +373,7 @@ function get_trueskill_event_rankings(event){
 function get_trueskill_team_rank(team){
 	$.ajax({
 			type: "GET",
-			url: "http://localhost:8080/team_trueskill/"+team,
+			url: "http://localhost:8080/api/trueskill/"+team,
 			dataType: "text",
 			success: function(result){
 			$("#trueskill-info").html(Math.round(result * 100) / 100 + "<span>TrueSkill Points</span>")

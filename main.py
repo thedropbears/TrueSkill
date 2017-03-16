@@ -3,7 +3,7 @@ appengine.monkeypatch()
 
 import logging
 import os
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file
 from frc_trueskill import FrcTrueSkill
 from slack import get_slackclient
 
@@ -22,17 +22,15 @@ except:
 # Store predictons
 prediction_msgs = {}
 
-trueskill_predictions = {}
 
 
 @app.route('/')
 def hello():
-    return app.send_static_file('index.html')
+    return  send_file('index.html')
 
 
 @app.route('/tba-webhook', methods=['POST'])
 def tba_webhook():
-    print("prediction")
     msg_data = request.json['message_data']
     msg_type = request.json['message_type']
     if msg_type == 'verification':
@@ -56,11 +54,6 @@ def api_predict(red_alliance, blue_alliance):
 @app.route('/predictions')
 def give_predictions():
     return str(trueskill_predictions)
-
-
-@app.route('/team_trueskill/<team>')
-def team_trueskill(team):
-    return str(trueskill.skill(team))
 
 
 @app.route('/event_trueskill_ranking/<event>')
