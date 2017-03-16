@@ -119,10 +119,31 @@ li {
 }
 
 .team-info {
-    width: 260px;
-    padding: 0;
-    margin: 0;
-    float: left;
+  width: 260px;
+  padding: 0;
+  margin: 0;
+  float: left;
+}
+
+.no-padding {
+  padding: 0
+}
+
+.event-ranking {
+  text-align: center;
+  color: #F44336;
+  float: left;
+  width: 660px;
+  height: auto;
+  background-color: white;
+  column-count: 2;
+}
+
+.event-ranking-div {
+  width: 330px;
+  margin-bottom: 0px;
+  padding: 0;
+  height: auto;
 }
 
 #title-box {

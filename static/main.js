@@ -94,11 +94,9 @@ function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score,
 }
 
 function change_card(win, match_id) {
-	console.log("helo")
 	if (win === 'red') {
 		$('.' + match_id + '.red-team').removeClass('red-team').addClass("red-team-won")
 	} else if (win === 'blue') {
-		console.log('.' + match_id + '.blue-team')
 		$('.' + match_id + '.blue-team').removeClass('blue-team').addClass("blue-team-won")
 
 	}
@@ -109,7 +107,7 @@ var events = []
 var team_events = []
 var team_events_names = {}
 var event_name_event = ""
-var team = ''
+var team = '4774'
 var trueskill_prediction = {}
 var team_names = {}
 var rank_list = []
@@ -146,7 +144,7 @@ $.ajax({
 	}
 })
 
-function set_team(team) {
+function set_team(team) {	
 	$.ajax({
 		type: "GET",
 		headers: {
@@ -301,14 +299,15 @@ function set_event(event_name){
 			event_key = events[event].key
 			$("#event-info").removeClass("hidden")
 			$("#event-name").text(events[event].short_name)
-			$("#event-location").text(events[event].locality)
+			$("#event-location").text(events[event].location)
 			$("#event-start-date").text(events[event].start_date)
 			$("#event-end-date").text(events[event].end_date)
 			event_name_event = events[event].short_name
 
 			get_trueskill_event_rankings(event_key)
 			get_event_matches(event_key)
-			break}
+			break
+		}
 	}}
 
 function get_event_matches(key){
@@ -354,7 +353,6 @@ function get_event_matches(key){
 						match_name,
 						event_name_event, current_match.key))
 				}
-
 			},
 
 		});
@@ -367,7 +365,8 @@ function get_trueskill_event_rankings(event){
 			url: "http://localhost:8080/event_trueskill_ranking/"+event,
 			dataType: "text",
 			success: function(result){
-				$("#event-ranking").empty().append(result)
+				$("#event-ranking-card-div").removeClass("hidden")
+				$(".event-ranking").empty().append(result)
 			},
 	});
 }
@@ -399,6 +398,7 @@ var loaded = false
 function get_team_names(page_num){
 	page = page_num
 	loaded = false
+	team = 4774
 	 $.ajax({
 			type: "GET",
 			headers: {
@@ -409,6 +409,8 @@ function get_team_names(page_num){
 			success: function(result){
 				if (result.length === 0){
 					loaded = true
+					loading(false)
+					refresh()
 					return
 				}
 				for (team in result){
@@ -418,7 +420,25 @@ function get_team_names(page_num){
 			}
 
 		});
+
 }	
+function refresh(){
+		get_trueskill_predictions()
+		if (team != ""){
+		set_team(team)
+		get_team_events(team)}
+		if (event_name_event != ""){
+		set_event(event_name_event)}
+}
+var percent = 10
+function loading(loading){
+	if (loading){
+		$(".loading").addClass('is-active')
+	}
+	else{
+		$(".loading").removeClass('is-active')
+	}
+}
 
 $(function () {
 $('select').on('change', function() {
@@ -427,16 +447,14 @@ $('select').on('change', function() {
 	});
 
 	$("#team-input").keypress(function (e) {
+		team = $("#team-input").val();
 		if (loaded){
 		if (e.which == 13) {
-			team = $("#team-input").val();
 			set_team(team);
 			get_team_events(team);}}
 	});
 	$(".refresh").click(function(){
-		get_trueskill_predictions()
-		set_team(team)
-		get_team_events(team)
-		set_event(event_name_event)
+		refresh()
 	})
+	loading(true)
 });
