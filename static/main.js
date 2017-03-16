@@ -56,12 +56,12 @@ function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score,
 		blue_score = "<br>"
 		blue_score = "<br>"
 	} else if (blue_score > red_score) {
-		blue_team = "blue-team-won"
+		blue_team = "blue-team won"
 	} else if (red_score > blue_score) {
-		red_team = "red-team-won"
+		red_team = "red-team won"
 	} else if (red_score === blue_score) {
-		red_team = "red-team-won"
-		blue_team = "blue-team-won"
+		red_team = "red-team won"
+		blue_team = "blue-team won"
 	}
 	var el = $("<div class=\"match-card mdl-card mdl-shadow--4dp card match-" + match_id + "\">" +
 		"<div class=\"mdl-card__title white-red\">" +
@@ -100,9 +100,9 @@ function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score,
 
 function change_card(win, match_id) {
 	if (win === 'red') {
-		$('.match-' + match_id + ' .red-team').removeClass('red-team').addClass("red-team-won")
+		$('.match-' + match_id + ' .red-team').addClass("won")
 	} else if (win === 'blue') {
-		$('.match-' + match_id + ' .blue-team').removeClass('blue-team').addClass("blue-team-won")
+		$('.match-' + match_id + ' .blue-team').addClass("won")
 
 	}
 }

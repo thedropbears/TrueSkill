@@ -78,13 +78,7 @@ li {
   border-left: 4px #2196F3 solid;
 }
 
-.blue-team-won {
-  text-align: center;
-  float: left;
-  width: 50%;
-  height: 141px;
-  -webkit-padding-start: 0px;
-  border-left: 4px #2196F3 solid;
+.blue-team.won {
   color: white;
   background-color: #2196F3;
 }
@@ -99,12 +93,7 @@ li {
   background-color: white;
 }
 
-.red-team-won {
-  text-align: center;
-  float: right;
-  width: 50%;
-  height: 141px;
-  border-right: 4px #F44336 solid;
+.red-team.won {
   color: white;
   background-color: #F44336;
 }
