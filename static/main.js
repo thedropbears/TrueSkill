@@ -156,7 +156,7 @@ function set_team(team) {
 			$("#team-location").text(result.locality)
 
 			$('.donut-chart').each(function (index) {
-				var svgEl = $('<svg preserveAspectRatio="xMidYMid" xmlns:xlink="http://www.w3.org/1999/xlink" id="donutChartSVG' + index + '"><path d="M100,100" /></svg>')
+				var svgEl = $('<svg preserveAspectRatio="xMidYMid" xmlns:xlink="http://www.w3.org/1999/xlink"><path d="M100,100" /></svg>')
 				$(this).append(svgEl);
 				var p = new DonutChart({
 					element: svgEl,
