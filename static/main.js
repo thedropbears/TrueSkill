@@ -362,11 +362,18 @@ function get_trueskill_event_rankings(event){
 	//team truskill json
 	$.ajax({
 			type: "GET",
-			url: "http://localhost:8080/event_trueskill_ranking/"+event,
+			url: "http://localhost:8080/api/trueskills/"+event,
 			dataType: "text",
 			success: function(result){
 				$("#event-ranking-card-div").removeClass("hidden")
-				$(".event-ranking").empty().append(result)
+				var rankingListEl = $(".event-ranking").empty()
+				for (var i = 0; i < result.length; i++) {
+					var skill = result[i][0];
+					var teamNum = result[i][1];
+					var nickname = result[i][2];
+					var li = $("<li>").text(teamNum + " - " + nickname + " - " + Math.round(skill * 100) / 100);
+					rankingListEl.append(li)
+				}
 			},
 	});
 }

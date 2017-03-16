@@ -56,19 +56,6 @@ def give_predictions():
     return str(trueskill_predictions)
 
 
-@app.route('/event_trueskill_ranking/<event>')
-def event_trueskil(event):
-    event_teams = trueskill.get_teams_at_event(event)
-    skills = [(team['key'], trueskill.skill(team['key']), team['nickname']) for team in event_teams]
-    skills = sorted(skills, key=lambda skill: skill[1], reverse=True)
-    msg = ''
-    num = 0
-    for skill in skills:
-        num += 1
-        msg += '<li>%s.  %s - %s - %0.1f\n</li> \n' % (str(num), skill[0][3:], skill[2], skill[1])
-    return msg.encode('utf-8').strip()
-
-
 @app.route('/predict')
 def send_predict_page():
     return app.send_static_file('predict.html')
