@@ -376,7 +376,7 @@ function get_trueskill_team_rank(team){
 			url: "http://localhost:8080/team_trueskill/"+team,
 			dataType: "text",
 			success: function(result){
-				$("#trueskill-info").empty().append(result + "<span>TrueSkill Points</span>")
+			$("#trueskill-info").html(Math.round(result * 100) / 100 + "<span>TrueSkill Points</span>")
 				
 			}
 		})
