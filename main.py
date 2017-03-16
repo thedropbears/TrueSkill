@@ -58,7 +58,7 @@ def give_predictions():
 
 @app.route('/predict')
 def send_predict_page():
-    return app.send_static_file('predict.html')
+    return send_file('predict.html')
 
 
 def predict(msg_data):
