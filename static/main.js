@@ -208,10 +208,7 @@ function get_team_matches(team) {
 	for (var i = 0; i < team_events.length; i++) {
 
 		$.ajax({
-			type: "GET",
-			headers: {
-				"X-TBA-App-Id": "frc-4774:TrueSkill:1.0"
-			},
+			headers: { "X-TBA-App-Id": "frc-4774:TrueSkill:1.0" },
 			url: "https://www.thebluealliance.com/api/v2/team/frc" + team + "/event/" + team_events[i] + "/matches",
 			dataType: "json",
 			success: function (result) {
@@ -251,12 +248,13 @@ function get_team_matches(team) {
 function get_team_matches(team) {
 	$("#card-team-div").empty() //.prepend("<div id=\"p2\" class=\"mdl-progress mdl-js-progress mdl-progress__indeterminate\"></div>");
 	for (var i = 0; i < team_events.length; i++) {
+		get_team_event_matches(team, team_events[i]);
+	}
+}
+function get_team_event_matches(team, event) {
 		$.ajax({
-			type: "GET",
-			headers: {
-				"X-TBA-App-Id": "frc-4774:TrueSkill:1.0"
-			},
-			url: "https://www.thebluealliance.com/api/v2/team/frc" + team + "/event/" + team_events[i] + "/matches",
+			headers: { "X-TBA-App-Id": "frc-4774:TrueSkill:1.0" },
+			url: "https://www.thebluealliance.com/api/v2/team/frc" + team + "/event/" + event + "/matches",
 			dataType: "json",
 			success: function (result) {
 				if (result.length === 0) {
@@ -267,7 +265,7 @@ function get_team_matches(team) {
 				})
 				for (var i = 0; i < result.length; i++) {
 					var current_match = result[i]
-					prediction = trueskill_prediction[current_match.key]
+					prediction = trueskill_prediction[event] && trueskill_prediction[event][current_match.key.split("_")[1]]
 
 					if (current_match.alliances.blue.score < 0) {
 						current_match.alliances.blue.score = current_match.alliances.red.score = ""
@@ -291,10 +289,9 @@ function get_team_matches(team) {
 
 				}
 
-			},
+			}
 
 		});
-	}
 }
 
 function set_event(event_name) {
@@ -319,10 +316,7 @@ function set_event(event_name) {
 function get_event_matches(key) {
 	$("#card-event-div").empty() //.prepend("<div id=\"p2\" class=\"mdl-progress mdl-js-progress mdl-progress__indeterminate\"></div>");
 	$.ajax({
-		type: "GET",
-		headers: {
-			"X-TBA-App-Id": "frc-4774:TrueSkill:1.0"
-		},
+		headers: { "X-TBA-App-Id": "frc-4774:TrueSkill:1.0" },
 		url: "https://www.thebluealliance.com/api/v2/event/" + key + "/matches",
 		dataType: "json",
 		success: function (result) {
@@ -336,7 +330,7 @@ function get_event_matches(key) {
 				var winner = ""
 				var current_match = result[i]
 
-				prediction = trueskill_prediction[current_match.key]
+				prediction = trueskill_prediction[key] && trueskill_prediction[key][current_match.key.split("_")[1]]
 
 				if (current_match.alliances.blue.score < 0) {
 					current_match.alliances.blue.score = current_match.alliances.red.score = ""
@@ -366,11 +360,7 @@ function get_event_matches(key) {
 
 function get_trueskill_event_rankings(event) {
 	//team truskill json
-	$.ajax({
-		type: "GET",
-		url: "/api/trueskills/" + event,
-		dataType: "text",
-		success: function (result) {
+	$.getJSON("/api/trueskills/" + event, function (result) {
 			$("#event-ranking-card-div").removeClass("hidden")
 			var rankingListEl = $(".event-ranking").empty()
 			for (var i = 0; i < result.length; i++) {
@@ -380,13 +370,11 @@ function get_trueskill_event_rankings(event) {
 				var li = $("<li>").text(teamNum + " - " + nickname + " - " + Math.round(skill * 100) / 100);
 				rankingListEl.append(li)
 			}
-		},
-	});
+		});
 }
 
 function get_trueskill_team_rank(team) {
 	$.ajax({
-		type: "GET",
 		url: "/api/trueskill/" + team,
 		dataType: "text",
 		success: function (result) {
@@ -396,16 +384,16 @@ function get_trueskill_team_rank(team) {
 	})
 }
 
-function get_trueskill_predictions() {
+function get_trueskill_predictions(event) {
 	//match prediction json
-	$.ajax({
-		type: "GET",
-		url: "/predictions",
-		dataType: "json",
-		success: function (result) {
+	if (!event) {
+		// oh boy.
+		return $.getJSON("/api/predictions", function (result) {
 			trueskill_prediction = result;
-		},
-
+		});
+	}
+	return $.getJSON("/api/predictions/" + event, function (result) {
+		trueskill_prediction[event] = result;
 	});
 }
 var loaded = false

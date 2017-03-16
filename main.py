@@ -21,7 +21,7 @@ except:
 
 # Store predictons
 prediction_msgs = {}
-
+trueskill_predictions = defaultdict(dict)
 
 
 @app.route('/')
@@ -51,9 +51,17 @@ def api_predict(red_alliance, blue_alliance):
     return str(trueskill.predict(red_alliance, blue_alliance)), {'Content-Type': 'text/plain'}
 
 
-@app.route('/predictions')
-def give_predictions():
-    return str(trueskill_predictions)
+# Please don't use this. This is a quick hack to get things working.
+@app.route('/api/predictions')
+def api_predictions_all():
+    return jsonify(trueskill_predictions)
+
+
+@app.route('/api/predictions/<event_key>')
+def api_predictions(event_key):
+    if event_key not in trueskill_predictions:
+        return jsonify({}), 404
+    return jsonify(trueskill_predictions[event_key])
 
 
 @app.route('/predict')
