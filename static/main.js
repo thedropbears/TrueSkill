@@ -362,7 +362,7 @@ function get_trueskill_event_rankings(event) {
 	//team truskill json
 	$.ajax({
 		type: "GET",
-		url: "http://localhost:8080/api/trueskills/" + event,
+		url: "/api/trueskills/" + event,
 		dataType: "text",
 		success: function (result) {
 			$("#event-ranking-card-div").removeClass("hidden")
@@ -381,7 +381,7 @@ function get_trueskill_event_rankings(event) {
 function get_trueskill_team_rank(team) {
 	$.ajax({
 		type: "GET",
-		url: "http://localhost:8080/api/trueskill/" + team,
+		url: "/api/trueskill/" + team,
 		dataType: "text",
 		success: function (result) {
 			$("#trueskill-info").html(Math.round(result * 100) / 100 + "<span>TrueSkill Points</span>")
@@ -394,7 +394,7 @@ function get_trueskill_predictions() {
 	//match prediction json
 	$.ajax({
 		type: "GET",
-		url: "http://localhost:8080/predictions",
+		url: "/predictions",
 		dataType: "json",
 		success: function (result) {
 			trueskill_prediction = result;
