@@ -43,12 +43,13 @@ function DonutChart(options) {
 function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score, match_name, match_location, match_id) {
 	var blue_team = "blue-team"
 	var red_team = "red-team"
-	var blue_odds = String(100 - red_odds) + '%'
-	red_odds = String(red_odds) + "%"
 
-	if (red_odds === "%") {
-		blue_odds = "<br>"
-		red_odds = "<br>"
+	var blue_odds;
+	if (red_odds !== "") {
+		blue_odds = (100 - red_odds) + '%'
+		red_odds = red_odds + "%"
+	} else {
+		red_odds = blue_odds = "<br>";
 	}
 
 	if (blue_score === "" || red_score === "") {
@@ -62,41 +63,46 @@ function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score,
 		red_team = "red-team-won"
 		blue_team = "blue-team-won"
 	}
-	return "<div class=\"match-card mdl-card mdl-shadow--4dp card " + match_id + "\">" +
+	var el = $("<div class=\"match-card mdl-card mdl-shadow--4dp card match-" + match_id + "\">" +
 		"<div class=\"mdl-card__title white-red\">" +
-		"<h2 class=\"mdl-card__title-text\">" + match_name + " - " + match_location + "</h2>" +
+		"<h2 class=\"mdl-card__title-text\"></h2>" +
 		"</div>" +
 		"<div class=\"mdl-card__supporting-text team\">" +
-		"<div class=\'" + blue_team + " " + match_id + "\'>" +
+		"<div class=\'" + blue_team + "\'>" +
 		"<ul>" +
 		"<li>" + blue_odds + "</li>" +
 		"<li><b>" + blue_score + "</b></li>" +
-		"<li>" + blue_alliance[0].slice(3) + " - " + get_team_name(blue_alliance[0]) + "</li>" +
-		"<li>" + blue_alliance[1].slice(3) + " - " + get_team_name(blue_alliance[1]) + "</li>" +
-		"<li>" + blue_alliance[2].slice(3) + " - " + get_team_name(blue_alliance[2]) + "</li>" +
+		"<li><span class='blue0-num'></span> - <span class='blue0-name'></span></li>" +
+		"<li><span class='blue1-num'></span> - <span class='blue1-name'></span></li>" +
+		"<li><span class='blue2-num'></span> - <span class='blue2-name'></span></li>" +
 		"</ul>" +
 		"</div>" +
-		"<div class=\'" + red_team + " " + match_id + "\'>" +
+		"<div class=\'" + red_team + "\'>" +
 		"<ul>" +
 		"<li>" + red_odds + "</li>" +
-		"<li>" + red_alliance[0] + "</li>" +
-		"<li>" + red_alliance[1] + "</li>" +
-		"<li>" + red_alliance[2] + "</li>" +
 		"<li><b>" + red_score + "</b></li>" +
-		"<li>" + red_alliance[0].substring(3, 10) + " - " + team_names[red_alliance[0]] + "</li>" +
-		"<li>" + red_alliance[1].substring(3, 10) + " - " + team_names[red_alliance[1]] + "</li>" +
-		"<li>" + red_alliance[2].substring(3, 10) + " - " + team_names[red_alliance[2]] + "</li>" +
+		"<li><span class='red0-num'></span> - <span class='red0-name'></span></li>" +
+		"<li><span class='red1-num'></span> - <span class='red1-name'></span></li>" +
+		"<li><span class='red2-num'></span> - <span class='red2-name'></span></li>" +
 		"</ul>" +
 		"</div>" +
 		"</div>" +
-		"</div>"
+		"</div>");
+	el.find("h2").text(match_name + " - " + match_location);
+	for (var i = 0; i < 3; i++) {
+		el.find('.blue' + i + '-num').text(blue_alliance[i].slice(3));
+		el.find('.blue' + i + '-name').text(team_names[blue_alliance[i]]);
+		el.find('.red' + i + '-num').text(red_alliance[i].slice(3));
+		el.find('.red' + i + '-name').text(team_names[red_alliance[i]]);
+	}
+	return el;
 }
 
 function change_card(win, match_id) {
 	if (win === 'red') {
-		$('.' + match_id + '.red-team').removeClass('red-team').addClass("red-team-won")
+		$('.match-' + match_id + ' .red-team').removeClass('red-team').addClass("red-team-won")
 	} else if (win === 'blue') {
-		$('.' + match_id + '.blue-team').removeClass('blue-team').addClass("blue-team-won")
+		$('.match-' + match_id + ' .blue-team').removeClass('blue-team').addClass("blue-team-won")
 
 	}
 }
