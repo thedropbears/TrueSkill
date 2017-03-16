@@ -103,12 +103,12 @@ class FrcTrueSkill:
         red_stats = score['red']
         blue_stats = score['blue']
 
-        if red_stats["rotor3Engaged"]:
+        if red_stats["rotorRankingPointAchieved"]:
             red_score += 100
         if red_stats["kPaRankingPointAchieved"]:
             red_score += 20
 
-        if blue_stats["rotor3Engaged"]:
+        if blue_stats["rotorRankingPointAchieved"]:
             blue_score += 100
         if blue_stats["kPaRankingPointAchieved"]:
             blue_score += 20
