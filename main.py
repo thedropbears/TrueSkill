@@ -1,11 +1,11 @@
-from requests_toolbelt.adapters import appengine
-appengine.monkeypatch()
-
-import logging
-import os
+from collections import defaultdict
 from flask import Flask, jsonify, request, send_file
+
 from frc_trueskill import FrcTrueSkill
 from slack import get_slackclient
+
+from requests_toolbelt.adapters import appengine
+appengine.monkeypatch()
 
 app = Flask(__name__)
 slack = get_slackclient()
@@ -26,7 +26,7 @@ trueskill_predictions = defaultdict(dict)
 
 @app.route('/')
 def hello():
-    return  send_file('index.html')
+    return send_file('index.html')
 
 
 @app.route('/tba-webhook', methods=['POST'])
@@ -73,25 +73,25 @@ def predict(msg_data):
     blue = msg_data['team_keys'][0:3]
     red = msg_data['team_keys'][3:6]
     event = msg_data['event_name']
-    event_key = msg_data['match_key'].split('_')[0]
-    match = msg_data['match_key'].split('_')[1]
+    event_key, match = msg_data['match_key'].split('_', 1)
     prediction = trueskill.predict(red, blue)
     red_text = ''
     blue_text = ''
     teams = trueskill.get_teams_at_event(event_key)
-    team_dict = dict(zip([team['key'] for team in teams], teams))
+    team_dict = dict(zip((team['key'] for team in teams), teams))
 
-    trueskill_predictions[msg_data['match_key']] = prediction
+    trueskill_predictions[event_key][match] = prediction
     for r in red:
         red_text += '%s - %s\n' % (r[3:], team_dict[r]['nickname'])
     for b in blue:
         blue_text += '%s - %s\n' % (b[3:], team_dict[b]['nickname'])
-    retval = send_prediction(event, match, red_text, blue_text, prediction)
-    prediction_msgs[msg_data['match_key']] = retval
+    msg = send_prediction(event, match, red_text, blue_text, prediction)
+    prediction_msgs[msg_data['match_key']] = msg
 
 
 def send_prediction(event, match, red_text, blue_text, prediction):
-    return slack.api_call('chat.postMessage',
+    return slack.api_call(
+        'chat.postMessage',
         channel='trueskill', as_user=True,
         text='*%s - %s*' % (event, match.upper()),
         attachments=[
@@ -101,19 +101,20 @@ def send_prediction(event, match, red_text, blue_text, prediction):
 
 
 def update(msg_data):
-    event_key = msg_data['match']['event_key']
     event = msg_data['event_name']
     alliances = msg_data['match']['alliances']
-    match = msg_data['match']['key'].split('_')[1].upper()
     red = alliances['red']
     blue = alliances['blue']
-    if not msg_data['match']['key'] in prediction_msgs:
-        payload = {'team_keys': blue['teams']+red['teams'], 'event_name': event,
-                'match_key': msg_data['match']['key']}
-        predict(payload)
+    if msg_data['match']['key'] not in prediction_msgs:
+        predict({
+            'team_keys': blue['teams'] + red['teams'],
+            'event_name': event,
+            'match_key': msg_data['match']['key']
+        })
     result = trueskill.update(msg_data['match'])
     if result:
         return send_update(msg_data['match']['key'], result)
+
 
 def send_update(match, result):
     # Find our previous prediction and resend with the winner marked on it
@@ -125,11 +126,12 @@ def send_update(match, result):
             # Alliance won (or tied)
             attachments[idx]['title'] += ' :trophy:'
     # Add another attachment with the current ratings
-    attachments.append({'text': list_trueskills(match.split('_')[0])})
+    attachments.append({'text': list_trueskills(match.split('_', 1)[0])})
 
-    return slack.api_call('chat.update', channel=prediction['channel'],
-            ts=prediction['ts'],text=msg['text'],
-            attachments=attachments)
+    return slack.api_call(
+        'chat.update', channel=prediction['channel'],
+        ts=prediction['ts'], text=msg['text'],
+        attachments=attachments)
 
 
 @app.route('/api/trueskill/<int:team_number>')
@@ -139,14 +141,15 @@ def api_trueskill(team_number):
 
 def get_trueskills_list(event_key):
     event_teams = trueskill.get_teams_at_event(event_key)
-    skills = [(trueskill.skill(team['key']), int(team['key'][3:]), team['nickname']) for team in event_teams]
+    skills = [(trueskill.skill(team['key']), int(team['key'][3:]), team['nickname'])
+              for team in event_teams]
     skills.sort(reverse=True)
     return skills
 
 
 def list_trueskills(event_key):
     msg = []
-    for skill, team_number, nickname in enumerate(get_trueskills_list(event_key), start=1):
+    for i, (skill, team_number, nickname) in enumerate(get_trueskills_list(event_key), start=1):
         msg.append('%d. %s - %s - %.1f\n' % (i, team_number, nickname, skill))
     return ''.join(msg)
 
@@ -159,10 +162,3 @@ def list_trueskills_http(event_key):
 @app.route('/api/trueskills/<event_key>')
 def api_trueskills(event_key):
     return jsonify(get_trueskills_list(event_key))
-
-
-@app.errorhandler(500)
-def server_error(e):
-    # Log the error and stacktrace.
-    logging.exception('An error occurred during a request.')
-    return 'An internal error occurred.', 500
