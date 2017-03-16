@@ -1,0 +1,209 @@
+a {
+  text-decoration: none;
+}
+
+ul {
+  -webkit-padding-start: 4px;
+  -webkit-padding-end: 4px;
+  list-style: none;
+}
+
+li {
+  list-style-type: none;
+}
+
+* {
+  padding: 0;
+  margin: 0;
+  /* border: white 1px solid;*/
+  box-sizing: border-box;
+}
+
+.top-icons {
+  vertical-align: middle;
+}
+
+.card {
+  color: white;
+  margin: 1%;
+  display: inline-block;
+  background: #F44336;
+  padding: 0;
+  min-height: 50%;
+}
+
+.blue-text {
+  color: #2196F3;
+}
+
+.red-text {
+  color: #F44336;
+}
+
+.white-text {
+  color: white;
+}
+
+.white-red {
+  color: white;
+  background-color: #F44336;
+}
+
+.team {
+  background-color: white;
+  width: 100%;
+  height: 141px;
+  -webkit-padding-start: 0px;
+  padding: 0px;
+}
+
+.selector {
+  margin: auto;
+  height: 50%;
+  width: 50%;
+  display: block;
+}
+
+.hidden {
+  display: none;
+}
+
+.blue-team {
+  text-align: center;
+  color: #2196F3;
+  float: left;
+  width: 50%;
+  height: 141px;
+  -webkit-padding-start: 0px;
+  border-left: 4px #2196F3 solid;
+}
+
+.blue-team.won {
+  color: white;
+  background-color: #2196F3;
+}
+
+.red-team {
+  text-align: center;
+  color: #F44336;
+  float: right;
+  width: 50%;
+  height: 141px;
+  border-right: 4px #F44336 solid;
+  background-color: white;
+}
+
+.red-team.won {
+  color: white;
+  background-color: #F44336;
+}
+
+.no-bottom-margin {
+  margin-bottom: 0;
+}
+
+.wide-card {
+  width: 660px;
+  height: 220px;
+}
+
+.team-info {
+  width: 260px;
+  padding: 0;
+  margin: 0;
+  float: left;
+}
+
+.no-padding {
+  padding: 0
+}
+
+.event-ranking {
+  text-align: center;
+  color: #F44336;
+  float: left;
+  width: 660px;
+  height: auto;
+  background-color: white;
+  column-count: 2;
+}
+
+.event-ranking-div {
+  width: 330px;
+  margin-bottom: 0px;
+  padding: 0;
+  height: auto;
+}
+
+#title-box {
+  height: 100%;
+  float: left;
+}
+
+#trueskill-points-div {
+  margin-top: 10px;
+  float: left;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#trueskill-points {
+  margin-top: 3%;
+}
+
+h1 {
+  font-weight: bold;
+}
+
+#event-list-div {
+  float: right;
+  width: 200px;
+  height: 100%
+}
+
+.donut-chart svg {
+  pointer-events: none;
+  height: 100%;
+}
+
+.donut-chart svg path {
+  fill: none;
+  stroke-width: 35px;
+  stroke: #19a8ff;
+}
+
+.donut-chart {
+  width: 200px;
+  height: 200px;
+  position: relative;
+  display: inline-block;
+}
+
+.donut-chart p {
+  margin: 0;
+  position: absolute;
+  top: 35%;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 2em;
+}
+
+.donut-chart span {
+  display: block;
+  font-size: 0.5em;
+}
+
+
+/* Just for the purpose of this pen */
+
+body {
+  text-align: center;
+}
+
+.grey svg path {
+  stroke: #ff3333;
+}

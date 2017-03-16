@@ -3,7 +3,7 @@ appengine.monkeypatch()
 
 import logging
 import os
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file
 from frc_trueskill import FrcTrueSkill
 from slack import get_slackclient
 
@@ -21,10 +21,12 @@ except:
 
 # Store predictons
 prediction_msgs = {}
+trueskill_predictions = defaultdict(dict)
+
 
 @app.route('/')
 def hello():
-    return 'Hello World!'
+    return  send_file('index.html')
 
 
 @app.route('/tba-webhook', methods=['POST'])
@@ -49,6 +51,24 @@ def api_predict(red_alliance, blue_alliance):
     return str(trueskill.predict(red_alliance, blue_alliance)), {'Content-Type': 'text/plain'}
 
 
+# Please don't use this. This is a quick hack to get things working.
+@app.route('/api/predictions')
+def api_predictions_all():
+    return jsonify(trueskill_predictions)
+
+
+@app.route('/api/predictions/<event_key>')
+def api_predictions(event_key):
+    if event_key not in trueskill_predictions:
+        return jsonify({}), 404
+    return jsonify(trueskill_predictions[event_key])
+
+
+@app.route('/predict')
+def send_predict_page():
+    return send_file('predict.html')
+
+
 def predict(msg_data):
     blue = msg_data['team_keys'][0:3]
     red = msg_data['team_keys'][3:6]
@@ -60,6 +80,8 @@ def predict(msg_data):
     blue_text = ''
     teams = trueskill.get_teams_at_event(event_key)
     team_dict = dict(zip([team['key'] for team in teams], teams))
+
+    trueskill_predictions[msg_data['match_key']] = prediction
     for r in red:
         red_text += '%s - %s\n' % (r[3:], team_dict[r]['nickname'])
     for b in blue:
@@ -124,8 +146,8 @@ def get_trueskills_list(event_key):
 
 def list_trueskills(event_key):
     msg = []
-    for skill, team_number, nickname in get_trueskills_list(event_key):
-        msg.append('%s - %s - %.1f\n' % (team_number, nickname, skill))
+    for skill, team_number, nickname in enumerate(get_trueskills_list(event_key), start=1):
+        msg.append('%d. %s - %s - %.1f\n' % (i, team_number, nickname, skill))
     return ''.join(msg)
 
 
