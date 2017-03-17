@@ -29,7 +29,7 @@
             $("#submit").click(function(){
             $.ajax({
 			type: "GET",
-			url: "'http://localhost:8080/api/predict/" + $("#r1").val() + "," + $("#r2").val() + "," + $("#r3").val() + "/"
+			url: "/api/predict/" + $("#r1").val() + "," + $("#r2").val() + "," + $("#r3").val() + "/"
              + $("#b1").val() + "," + $("#b2").val() + "," + $("#b3").val(),
 			dataType: "text",
 			success: function(result){
