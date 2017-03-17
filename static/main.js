@@ -70,7 +70,7 @@ function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score,
 		"<div class=\"mdl-card__supporting-text team\">" +
 		"<div class=\'" + blue_team + "\'>" +
 		"<ul>" +
-		"<li>" + blue_odds + "</li>" +
+		"<li>" + String(Math.round(blue_odds * 100) / 100)  + "</li>" +
 		"<li><b>" + blue_score + "</b></li>" +
 		"<li><span class='blue0-num'></span> - <span class='blue0-name'></span></li>" +
 		"<li><span class='blue1-num'></span> - <span class='blue1-name'></span></li>" +
@@ -79,7 +79,7 @@ function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score,
 		"</div>" +
 		"<div class=\'" + red_team + "\'>" +
 		"<ul>" +
-		"<li>" + red_odds + "</li>" +
+		"<li>" + String(Math.round(red_odds * 100) / 100)  + "</li>" +
 		"<li><b>" + red_score + "</b></li>" +
 		"<li><span class='red0-num'></span> - <span class='red0-name'></span></li>" +
 		"<li><span class='red1-num'></span> - <span class='red1-name'></span></li>" +
@@ -110,7 +110,7 @@ function change_card(win, match_id) {
 
 var events = []
 var team_events = []
-var team_events_names = {}
+var team_events_names = []
 var event_name_event = ""
 var team = '4774'
 var trueskill_prediction = {}
@@ -189,10 +189,10 @@ function get_team_events(team) {
 		dataType: "json",
 		success: function (result) {
 			var evList = $("#event-list").html("<h3>Regionals</h3>");
-			team_events = []
+			team_events_names = []
 			for (var i = 0; i < result.length; i++) {
 				evList.append($('<li>').text(result[i].name));
-				team_events.push(result[i].key)
+				team_events_names.push(result[i].short_name)
 			}
 			get_team_matches(team);
 
@@ -204,7 +204,7 @@ function get_team_events(team) {
 }
 
 function get_team_matches(team) {
-	$("#card-div").empty() //.prepend("<div id=\"p2\" class=\"mdl-progress mdl-js-progress mdl-progress__indeterminate\"></div>");
+	$("#card-div").empty()
 	for (var i = 0; i < team_events.length; i++) {
 
 		$.ajax({
@@ -296,13 +296,13 @@ function get_team_event_matches(team, event) {
 
 function set_event(event_name) {
 	var event_key = ""
-	for (var i = 0; i < events; i++) {
+	for (var i = 0; i < events.length; i++) {
 		if (events[i].short_name === event_name) {
 			event_key = events[i].key
 			$("#event-info").removeClass("hidden")
 			$("#event-name").text(events[i].short_name)
 			$("#event-location").text(events[i].location)
-			$("#event-start-date").text(events[i].start_date)
+			$("#event-start-date").text(events[i].start_date+" -")
 			$("#event-end-date").text(events[i].end_date)
 			event_name_event = events[i].short_name
 
@@ -434,7 +434,6 @@ function refresh() {
 		set_event(event_name_event)
 	}
 }
-var percent = 10
 
 function loading(loading) {
 	if (loading) {
