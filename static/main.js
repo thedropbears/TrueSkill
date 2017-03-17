@@ -46,15 +46,15 @@ function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score,
 
 	var blue_odds;
 	if (red_odds !== "") {
-		blue_odds = String(Math.round((100 - red_odds) * 100)) + "%"
-		red_odds = String(Math.round(red_odds * 100) * 100) + "%"
+		red_odds = Math.round(red_odds * 100)
+		blue_odds = String(100 - red_odds) + "%"
+		red_odds = String(red_odds) + "%"
 	} else {
 		red_odds = blue_odds = "<br>";
 	}
 
 	if (blue_score === "" || red_score === "") {
-		blue_score = "<br>"
-		red_score = "<br>"
+		blue_score = red_score = "<br>"
 	} else if (blue_score > red_score) {
 		blue_team = "blue-team won"
 	} else if (red_score > blue_score) {
