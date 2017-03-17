@@ -10,14 +10,14 @@
         <h1>Frc Prediction</h1><br>
         
         <form>
-            Red 1: <input id="r1" type="text">
-            Red 2: <input id="r2" type="text">
-            Red 3: <input id="r3" type="text">
+            Red 1: <input maxlength="4" id="r1" type="text">
+            Red 2: <input maxlength="4" id="r2" type="text">
+            Red 3: <input maxlength="4" id="r3" type="text">
             <br>
             <br>
-            Blue 1: <input id="b1" type="text"> 
-            Blue 2: <input id="b2" type="text"> 
-            Blue 3: <input id="b3" type="text"> 
+            Blue 1: <input maxlength="4" id="b1" type="text"> 
+            Blue 2: <input maxlength="4" id="b2" type="text"> 
+            Blue 3: <input maxlength="4" id="b3" type="text"> 
             <br><br>
             <button id="submit" type="button">Submit</button>
         </form>
@@ -33,7 +33,7 @@
              + $("#b1").val() + "," + $("#b2").val() + "," + $("#b3").val(),
 			dataType: "text",
 			success: function(result){
-				$("#result").empty().append(result + '%')
+				$("#result").empty().append((result * 100) + '%')
 				
 			}
         })})

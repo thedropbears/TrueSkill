@@ -46,8 +46,8 @@ function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score,
 
 	var blue_odds;
 	if (red_odds !== "") {
-		blue_odds = (100 - red_odds) + '%'
-		red_odds = red_odds + "%"
+		red_odds = String(Math.round(red_odds * 100) / 100) + "%"
+		blue_odds = String(Math.round((100 - red_odds) * 100) / 100) + "%"
 	} else {
 		red_odds = blue_odds = "<br>";
 	}
@@ -70,7 +70,7 @@ function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score,
 		"<div class=\"mdl-card__supporting-text team\">" +
 		"<div class=\'" + blue_team + "\'>" +
 		"<ul>" +
-		"<li>" + String(Math.round(blue_odds * 100) / 100)  + "</li>" +
+		"<li>" + blue_odds + "</li>" +
 		"<li><b>" + blue_score + "</b></li>" +
 		"<li><span class='blue0-num'></span> - <span class='blue0-name'></span></li>" +
 		"<li><span class='blue1-num'></span> - <span class='blue1-name'></span></li>" +
@@ -79,7 +79,7 @@ function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score,
 		"</div>" +
 		"<div class=\'" + red_team + "\'>" +
 		"<ul>" +
-		"<li>" + String(Math.round(red_odds * 100) / 100)  + "</li>" +
+		"<li>" + red_odds + "</li>" +
 		"<li><b>" + red_score + "</b></li>" +
 		"<li><span class='red0-num'></span> - <span class='red0-name'></span></li>" +
 		"<li><span class='red1-num'></span> - <span class='red1-name'></span></li>" +
@@ -109,8 +109,8 @@ function change_card(win, match_id) {
 
 
 var events = []
-var team_events = []
-var team_events_names = []
+var team_events_key = []
+var team_events_names = {}
 var event_name_event = ""
 var team = '4774'
 var trueskill_prediction = {}
@@ -168,8 +168,9 @@ function set_team(team) {
 					element: svgEl,
 					percent: 100,
 				});
-				p.animate();
+				//p.animate();
 				get_trueskill_team_rank(result.team_number)
+				get_team_events(result.team_number)
 			});
 
 		},
@@ -189,69 +190,24 @@ function get_team_events(team) {
 		dataType: "json",
 		success: function (result) {
 			var evList = $("#event-list").html("<h3>Regionals</h3>");
-			team_events_names = []
+			team_events_names = {}
+			team_events_key = []
 			for (var i = 0; i < result.length; i++) {
 				evList.append($('<li>').text(result[i].name));
-				team_events_names.push(result[i].short_name)
+				team_events_names[result[i].key] = (result[i].short_name)
+
+				team_events_key.push(result[i].key)
+				get_team_event_matches(team, result[i].key);
 			}
-			get_team_matches(team);
 
 		},
-		error: function () {
-			alert("ERROR");
-		}
 	});
 }
 
-function get_team_matches(team) {
-	$("#card-div").empty()
-	for (var i = 0; i < team_events.length; i++) {
 
-		$.ajax({
-			headers: { "X-TBA-App-Id": "frc-4774:TrueSkill:1.0" },
-			url: "https://www.thebluealliance.com/api/v2/team/frc" + team + "/event/" + team_events[i] + "/matches",
-			dataType: "json",
-			success: function (result) {
-				if (result.length === 0) {
-					return
-				}
-				result.sort(function (a, b) {
-					return a.time - b.time
-				})
-				for (var i = 0; i < result.length; i++) {
-					var winner = ""
-					var current_match = result[i]
 
-					if (current_match.alliances.blue.score < 0) {
-						return
-					}
-					if (current_match.alliances.blue.score > current_match.alliances.red.score) {
-						winner = "match_blue"
-					} else {
-						winner = "match_red"
-					}
-
-					$("#card-div").prepend(make_card("", current_match.alliances.blue.teams, current_match.alliances.red.teams,
-						current_match.comp_level.toUpperCase() + String(current_match.match_number),
-						"pass", current_match.time, winner))
-				}
-
-			},
-			error: function () {
-				alert("ERROR");
-			}
-
-		});
-	}
-}
-
-function get_team_matches(team) {
-	$("#card-team-div").empty() //.prepend("<div id=\"p2\" class=\"mdl-progress mdl-js-progress mdl-progress__indeterminate\"></div>");
-	for (var i = 0; i < team_events.length; i++) {
-		get_team_event_matches(team, team_events[i]);
-	}
-}
 function get_team_event_matches(team, event) {
+		$("#card-team-div").empty()
 		$.ajax({
 			headers: { "X-TBA-App-Id": "frc-4774:TrueSkill:1.0" },
 			url: "https://www.thebluealliance.com/api/v2/team/frc" + team + "/event/" + event + "/matches",
@@ -266,22 +222,20 @@ function get_team_event_matches(team, event) {
 				for (var i = 0; i < result.length; i++) {
 					var current_match = result[i]
 					prediction = trueskill_prediction[event] && trueskill_prediction[event][current_match.key.split("_")[1]]
-
 					if (current_match.alliances.blue.score < 0) {
 						current_match.alliances.blue.score = current_match.alliances.red.score = ""
-						if (prediction === undefined) {
+						if (prediction === undefined || prediction === NaN) {
 							continue
 						}
 					}
-					if (prediction === undefined) {
+					if (prediction === undefined || prediction === NaN) {
 						prediction = ""
 					}
 					if (current_match.comp_level != 'qm') {
-						match_name = current_match.comp_level.toUpperCase() + String(current_match.match_number) + "." + String(current_match.set_number)
+						match_name = current_match.comp_level.toUpperCase() + String(current_match.set_number)  + "." + String(current_match.match_number)
 					} else {
 						match_name = current_match.comp_level.toUpperCase() + String(current_match.match_number)
 					}
-
 					$("#card-team-div").prepend(make_card(prediction, current_match.alliances.blue.teams, current_match.alliances.red.teams,
 						current_match.alliances.blue.score, current_match.alliances.red.score,
 						match_name,
@@ -305,8 +259,8 @@ function set_event(event_name) {
 			$("#event-start-date").text(events[i].start_date+" -")
 			$("#event-end-date").text(events[i].end_date)
 			event_name_event = events[i].short_name
-
 			get_trueskill_event_rankings(event_key)
+
 			get_event_matches(event_key)
 			break
 		}
@@ -314,7 +268,7 @@ function set_event(event_name) {
 }
 
 function get_event_matches(key) {
-	$("#card-event-div").empty() //.prepend("<div id=\"p2\" class=\"mdl-progress mdl-js-progress mdl-progress__indeterminate\"></div>");
+	$("#card-event-div").empty()
 	$.ajax({
 		headers: { "X-TBA-App-Id": "frc-4774:TrueSkill:1.0" },
 		url: "https://www.thebluealliance.com/api/v2/event/" + key + "/matches",
@@ -334,15 +288,15 @@ function get_event_matches(key) {
 
 				if (current_match.alliances.blue.score < 0) {
 					current_match.alliances.blue.score = current_match.alliances.red.score = ""
-					if (prediction === undefined) {
+					if (prediction === undefined || prediction === NaN) {
 						continue
 					}
 				}
-				if (prediction === undefined) {
+				if (prediction === undefined || prediction === NaN) {
 					prediction = ""
 				}
 				if (current_match.comp_level != 'qm') {
-					match_name = current_match.comp_level.toUpperCase() + String(current_match.match_number) + "." + String(current_match.set_number)
+					match_name = current_match.comp_level.toUpperCase() + String(current_match.set_number) + "." + String(current_match.match_number)
 				} else {
 					match_name = current_match.comp_level.toUpperCase() + String(current_match.match_number)
 				}
@@ -362,12 +316,13 @@ function get_trueskill_event_rankings(event) {
 	//team truskill json
 	$.getJSON("/api/trueskills/" + event, function (result) {
 			$("#event-ranking-card-div").removeClass("hidden")
-			var rankingListEl = $(".event-ranking").empty()
+			 $(".event-ranking").empty()
+			var rankingListEl = $(".event-ranking")
 			for (var i = 0; i < result.length; i++) {
 				var skill = result[i][0];
 				var teamNum = result[i][1];
 				var nickname = result[i][2];
-				var li = $("<li>").text(teamNum + " - " + nickname + " - " + Math.round(skill * 100) / 100);
+				var li = $("<li>").text(i+1 + ". "+ teamNum + " - " + nickname + " - " + Math.round(skill * 100) / 100);
 				rankingListEl.append(li)
 			}
 		});
@@ -378,6 +333,7 @@ function get_trueskill_team_rank(team) {
 		url: "/api/trueskill/" + team,
 		dataType: "text",
 		success: function (result) {
+			$
 			$("#trueskill-info").html(Math.round(result * 100) / 100 + "<span>TrueSkill Points</span>")
 
 		}
@@ -430,8 +386,8 @@ function refresh() {
 		set_team(team)
 		get_team_events(team)
 	}
-	if (event_name_event) {
-		set_event(event_name_event)
+	if (selected_event) {
+		set_event(selected_event)
 	}
 }
 
@@ -442,11 +398,12 @@ function loading(loading) {
 		$(".loading").removeClass('is-active')
 	}
 }
-
+var selected_event
 $(function () {
 	$('select').on('change', function () {
+		selected_event = this.value
 		if (loaded) {
-			set_event(this.value);
+			set_event(selected_event);
 		}
 	});
 
