@@ -192,12 +192,21 @@ function get_team_events(team) {
 			var evList = $("#event-list").html("<h3>Regionals</h3>");
 			team_events_names = {}
 			team_events_key = []
+			var event_start = []
 			for (var i = 0; i < result.length; i++) {
 				evList.append($('<li>').text(result[i].name));
-				team_events_names[result[i].key] = (result[i].short_name)
+				team_events_names[result[i].key] = result[i].short_name
 
 				team_events_key.push(result[i].key)
-				get_team_event_matches(team, result[i].key);
+				event_start[result[i].key] = result[i].start_date
+			}
+
+			team_events_key.sort(function(a, b){
+				return new Date(event_start[a]) - new Date(event_start[b])
+			});
+
+			for (var i = 0; i < team_events_key.length; i++) { 
+			get_team_event_matches(team, team_events_key[i]);
 			}
 
 		},
