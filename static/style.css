@@ -29,7 +29,7 @@ li {
   display: inline-block;
   background: #F44336;
   padding: 0;
-  min-height: 50%;
+  height: auto;
 }
 
 .blue-text {
@@ -52,7 +52,7 @@ li {
 .team {
   background-color: white;
   width: 100%;
-  height: 141px;
+  height: auto;
   -webkit-padding-start: 0px;
   padding: 0px;
 }
@@ -73,7 +73,7 @@ li {
   color: #2196F3;
   float: left;
   width: 50%;
-  height: 141px;
+  height: fit-content;
   -webkit-padding-start: 0px;
   border-left: 4px #2196F3 solid;
 }
@@ -88,7 +88,7 @@ li {
   color: #F44336;
   float: right;
   width: 50%;
-  height: 141px;
+  height: fit-content;
   border-right: 4px #F44336 solid;
   background-color: white;
 }
@@ -104,7 +104,7 @@ li {
 
 .wide-card {
   width: 660px;
-  height: 100%;
+  height: auto;
 }
 
 .team-info {

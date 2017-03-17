@@ -174,9 +174,6 @@ function set_team(team) {
 			});
 
 		},
-		error: function () {
-			alert("ERROR: Team not found");
-		}
 	});
 }
 
