@@ -23,7 +23,12 @@ class FrcTrueSkill:
         self.env = TrueSkill(draw_probability=0.02)
         self.trueskills = {}
         self.events = {}
+        self.nicknames = {}
         self.processed_matches = set()
+
+        self.session = requests.Session()
+        self.session.headers.update(self.HEADERS)
+
         self.get_previous_matches()
 
     def init_teams(self, red_alliance, blue_alliance):
@@ -36,8 +41,8 @@ class FrcTrueSkill:
             return None
 
         alliances = match_data['alliances']
-        red_teams = alliances['red']['teams']
-        blue_teams = alliances['blue']['teams']
+        red_teams = [int(x[3:]) for x in alliances['red']['teams']]
+        blue_teams = [int(x[3:]) for x in alliances['blue']['teams']]
 
         self.init_teams(red_teams, blue_teams)
         # Update ratings based on result
@@ -73,8 +78,6 @@ class FrcTrueSkill:
         return backends.cdf(delta_mu / denominator)
 
     def skill(self, team):
-        if isinstance(team, int):
-            team = 'frc%d' % team
         if team not in self.trueskills:
             self.trueskills[team] = self.env.Rating()
         return self.env.expose(self.trueskills[team])
@@ -82,23 +85,23 @@ class FrcTrueSkill:
     def get_teams_at_event(self, event):
         if event not in self.events:
             # We haven't got this one yet
-            teams = requests.get("%s/event/%s/teams" % (self.TBA_API_BASE, event),
-                                 headers=self.HEADERS)
+            teams = self.session.get("%s/event/%s/teams" % (self.TBA_API_BASE, event))
             teams = teams.json()
-            self.events[event] = teams
+            self.events[event] = [team["team_number"] for team in teams]
+            for team in teams:
+                self.nicknames[team["team_number"]] = team["nickname"]
         return self.events[event]
 
     def get_previous_matches(self):
         all_matches = []
-        events = requests.get(self.TBA_API_BASE + "/events/2017", headers=self.HEADERS)
+        events = self.session.get(self.TBA_API_BASE + "/events/2017")
         events = events.json()
 
         for event in events:
             if event['event_type'] > 5:
                 continue
             if event['start_date'] <= str(datetime.date(datetime.today()+timedelta(days=1))):
-                matches = requests.get("%s/event/%s/matches" % (self.TBA_API_BASE, event['key']),
-                                       headers=self.HEADERS)
+                matches = self.session.get("%s/event/%s/matches" % (self.TBA_API_BASE, event['key']))
                 matches = matches.json()
                 all_matches += matches
         all_matches.sort(key=lambda m: m['time'])

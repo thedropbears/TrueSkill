@@ -230,11 +230,11 @@ function get_team_event_matches(team, event) {
 					prediction = trueskill_prediction[event] && trueskill_prediction[event][current_match.key.split("_")[1]]
 					if (current_match.alliances.blue.score < 0) {
 						current_match.alliances.blue.score = current_match.alliances.red.score = ""
-						if (prediction === undefined || prediction === NaN) {
+						if (prediction === undefined || isNaN(prediction)) {
 							continue
 						}
 					}
-					if (prediction === undefined || prediction === NaN) {
+					if (prediction === undefined || isNaN(prediction)) {
 						prediction = ""
 					}
 					if (current_match.comp_level != 'qm') {

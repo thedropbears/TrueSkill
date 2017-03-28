@@ -4,8 +4,8 @@ from flask import Flask, jsonify, request, send_file
 from frc_trueskill import FrcTrueSkill
 from slack import get_slackclient
 
-from requests_toolbelt.adapters import appengine
-appengine.monkeypatch()
+# from requests_toolbelt.adapters import appengine
+# appengine.monkeypatch()
 
 app = Flask(__name__)
 slack = get_slackclient()
@@ -78,13 +78,14 @@ def predict(msg_data):
     red_text = ''
     blue_text = ''
     teams = trueskill.get_teams_at_event(event_key)
-    team_dict = dict(zip((team['key'] for team in teams), teams))
 
     trueskill_predictions[event_key][match] = prediction
     for r in red:
-        red_text += '%s - %s\n' % (r[3:], team_dict[r]['nickname'])
+        r = r[3:]
+        red_text += '%s - %s\n' % (r, trueskill.nicknames[int(r)])
     for b in blue:
-        blue_text += '%s - %s\n' % (b[3:], team_dict[b]['nickname'])
+        b = b[3:]
+        blue_text += '%s - %s\n' % (b, trueskill.nicknames[int(b)])
     msg = send_prediction(event, match, red_text, blue_text, prediction)
     prediction_msgs[msg_data['match_key']] = msg
 
@@ -136,12 +137,12 @@ def send_update(match, result):
 
 @app.route('/api/trueskill/<int:team_number>')
 def api_trueskill(team_number):
-    return str(trueskill.skill('frc%d' % team_number)), {'Content-Type': 'text/plain'}
+    return str(trueskill.skill(team_number)), {'Content-Type': 'text/plain'}
 
 
 def get_trueskills_list(event_key):
     event_teams = trueskill.get_teams_at_event(event_key)
-    skills = [(trueskill.skill(team['key']), int(team['key'][3:]), team['nickname'])
+    skills = [(trueskill.skill(team), team, trueskill.nicknames[team])
               for team in event_teams]
     skills.sort(reverse=True)
     return skills
