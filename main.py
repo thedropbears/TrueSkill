@@ -4,8 +4,8 @@ from flask import Flask, jsonify, request, send_file
 from frc_trueskill import FrcTrueSkill
 from slack import get_slackclient
 
-# from requests_toolbelt.adapters import appengine
-# appengine.monkeypatch()
+from requests_toolbelt.adapters import appengine
+appengine.monkeypatch()
 
 app = Flask(__name__)
 slack = get_slackclient()
