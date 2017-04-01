@@ -46,9 +46,9 @@ def tba_webhook():
 
 @app.route('/api/predict/<red_alliance>/<blue_alliance>')
 def api_predict(red_alliance, blue_alliance):
-    red_alliance = ['frc%d' % int(n) for n in red_alliance.split(',')]
-    blue_alliance = ['frc%d' % int(n) for n in blue_alliance.split(',')]
-    return str(trueskill.predict(red_alliance, blue_alliance)), {'Content-Type': 'text/plain'}
+    red = [str(n) for n in red_alliance.split(',')]
+    blue = [str(n) for n in blue_alliance.split(',')]
+    return str(trueskill.predict(red, blue)), {'Content-Type': 'text/plain'}
 
 
 # Please don't use this. This is a quick hack to get things working.
@@ -70,8 +70,8 @@ def send_predict_page():
 
 
 def predict(msg_data):
-    blue = msg_data['team_keys'][0:3]
-    red = msg_data['team_keys'][3:6]
+    blue = [int(key[3:]) for key in msg_data['team_keys'][0:3]]
+    red = [int(key[3:]) for key in msg_data['team_keys'][3:6]]
     event = msg_data['event_name']
     event_key, match = msg_data['match_key'].split('_', 1)
     prediction = trueskill.predict(red, blue)
@@ -81,11 +81,9 @@ def predict(msg_data):
 
     trueskill_predictions[event_key][match] = prediction
     for r in red:
-        r = r[3:]
-        red_text += '%s - %s\n' % (r, trueskill.nicknames[int(r)])
+        red_text += '%d - %s\n' % (r, trueskill.nicknames[r])
     for b in blue:
-        b = b[3:]
-        blue_text += '%s - %s\n' % (b, trueskill.nicknames[int(b)])
+        blue_text += '%d - %s\n' % (b, trueskill.nicknames[b])
     msg = send_prediction(event, match, red_text, blue_text, prediction)
     prediction_msgs[msg_data['match_key']] = msg
 
@@ -122,8 +120,8 @@ def send_update(match, result):
     prediction = prediction_msgs[match]
     msg = prediction['message']
     attachments = msg['attachments']
-    for idx in [0, 1]:
-        if result[idx] == 0:
+    for idx in 0, 1:
+        if result[idx] is FrcTrueSkill.WON:
             # Alliance won (or tied)
             attachments[idx]['title'] += ' :trophy:'
     # Add another attachment with the current ratings
