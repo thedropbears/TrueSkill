@@ -37,9 +37,13 @@ def tba_webhook():
     msg_data = request.json['message_data']
     msg_type = request.json['message_type']
     if msg_type == 'verification':
-        slack.message('TBA verification key: %s' % msg_data)
-    if msg_type == 'ping':
-        slack.message('Just been pinged by The Blue Alliance.')
+        slack.api_call(
+            'chat.postMessage', channel='trueskill', as_user=True,
+            text='TBA verification key: %s' % msg_data)
+    elif msg_type == 'ping':
+        slack.api_call(
+            'chat.postMessage', channel='trueskill', as_user=True,
+            text='Just got pinged by The Blue Alliance.')
     elif msg_type == 'upcoming_match':
         predict(msg_data)
     elif msg_type == 'match_score':
