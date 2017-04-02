@@ -7,7 +7,7 @@ handlers:
   static_dir: static
 
 - url: /.*
-  script: main.app
+  script: app.app
 
 libraries:
 - name: ssl
