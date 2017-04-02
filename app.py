@@ -1,3 +1,4 @@
+import os
 from collections import defaultdict
 from flask import Flask, jsonify, request, send_file
 
@@ -166,4 +167,4 @@ def api_trueskills(event_key):
 
 
 if __name__ == "__main__":
-    app.run(port=8080)
+    app.run(host=os.environ.get('OPENSHIFT_PYTHON_IP', '0.0.0.0'), port=int(os.environ.get('OPENSHIFT_PYTHON_PORT', 8080)))
