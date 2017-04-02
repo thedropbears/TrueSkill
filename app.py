@@ -4,8 +4,10 @@ from flask import Flask, jsonify, request, send_file
 from frc_trueskill import FrcTrueSkill
 from slack import get_slackclient
 
+import requests.packages.urllib3.contrib.appengine as urllib3_appengine
 from requests_toolbelt.adapters import appengine
-appengine.monkeypatch()
+if urllib3_appengine.is_appengine_sandbox():
+    appengine.monkeypatch()
 
 app = Flask(__name__)
 slack = get_slackclient()
@@ -161,3 +163,7 @@ def list_trueskills_http(event_key):
 @app.route('/api/trueskills/<event_key>')
 def api_trueskills(event_key):
     return jsonify(get_trueskills_list(event_key))
+
+
+if __name__ == "__main__":
+    app.run(port=8080)
