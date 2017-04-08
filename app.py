@@ -53,8 +53,8 @@ def tba_webhook():
 
 @app.route('/api/predict/<red_alliance>/<blue_alliance>')
 def api_predict(red_alliance, blue_alliance):
-    red = [str(n) for n in red_alliance.split(',')]
-    blue = [str(n) for n in blue_alliance.split(',')]
+    red = [int(n) for n in red_alliance.split(',')]
+    blue = [int(n) for n in blue_alliance.split(',')]
     return str(trueskill.predict(red, blue)), {'Content-Type': 'text/plain'}
 
 
