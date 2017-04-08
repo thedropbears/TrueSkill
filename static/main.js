@@ -46,7 +46,7 @@ function make_card(red_odds, blue_alliance, red_alliance, blue_score, red_score,
 
 	var blue_odds;
 	if (red_odds !== "") {
-		red_odds = Math.round(red_odds)
+		red_odds = Math.round(100 * red_odds)
 		blue_odds = String(100 - red_odds) + "%"
 		red_odds = String(red_odds) + "%"
 	} else {
